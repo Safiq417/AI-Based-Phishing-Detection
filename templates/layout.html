@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishShield // Enterprise Security</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            background-color: #f8fafc;
+            color: #334155;
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.65rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e1;
+            background-color: #f8fafc;
+            color: #0f172a;
+            transition: all 0.2s ease;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            background-color: #ffffff;
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            text-align: center;
+            display: inline-block;
+            width: 100%;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+    <nav class="card mx-4 my-4 p-4 flex justify-between items-center">
+        <a href="#" class="text-xl font-bold tracking-tight text-blue-700">
+            PhishShield <span class="text-slate-400 font-normal ml-1 text-sm tracking-normal">Enterprise Edition</span>
+        </a>
+        <div class="space-x-5 text-sm font-semibold">
+            {% if session.get('user_id') %}
+                <a href="{{ url_for('dashboard') }}" class="text-slate-600 hover:text-blue-600 transition">Dashboard</a>
+                {% if session.get('role') == 'admin' %}
+                    <a href="{{ url_for('admin_panel') }}" class="text-purple-600 hover:text-purple-700 transition">Admin Console</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="text-red-600 hover:text-red-700 transition">Log Out</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="text-slate-600 hover:text-blue-600 transition">Login</a>
+                <a href="{{ url_for('register') }}" class="text-slate-600 hover:text-blue-600 transition">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main class="flex-grow container mx-auto px-4 py-6">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="p-4 mb-6 rounded-lg font-medium text-center shadow-sm border 
+                        {% if category == 'danger' %} bg-red-50 text-red-700 border-red-200 
+                        {% else %} bg-green-50 text-green-700 border-green-200 {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="text-center p-6 border-t border-slate-200 text-sm text-slate-500 font-medium">
+        &copy; 2026 AI-Based Phishing Detection & URL Risk Assessment System
+    </footer>
+</body>
+</html>

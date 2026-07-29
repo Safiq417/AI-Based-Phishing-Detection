@@ -1,0 +1,121 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div class="card p-6 flex flex-col justify-center items-center border-l-4 border-blue-500">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Scans Performed</span>
+        <span class="text-4xl font-extrabold text-slate-800 mt-2">{{ total_scans }}</span>
+    </div>
+    <div class="card p-6 flex flex-col justify-center items-center border-l-4 border-red-500">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-500">High Risk Threats Detected</span>
+        <span class="text-4xl font-extrabold text-red-600 mt-2">{{ total_threats }}</span>
+    </div>
+    <div class="card p-6 flex justify-center items-center">
+        <div class="w-full h-32 relative">
+            <canvas id="riskDistributionChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1 card p-6 h-fit">
+        <h3 class="text-lg font-bold mb-4 text-slate-800 border-b pb-2">New Analysis</h3>
+        <form action="{{ url_for('dashboard') }}" method="POST" class="space-y-4" onsubmit="return validatePayload()">
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Payload Type</label>
+                <select name="type" class="input-field">
+                    <option value="text">Email / SMS Content</option>
+                    <option value="url">Web URL</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Target Data</label>
+                <textarea name="content" rows="6" required class="input-field text-sm" placeholder="Paste message text or full URL here..."></textarea>
+            </div>
+            <button type="submit" class="btn-primary">Analyze Threat</button>
+        </form>
+    </div>
+
+    <div class="lg:col-span-2 card p-0 overflow-hidden">
+        <div class="p-5 border-b border-slate-100 bg-slate-50">
+            <h3 class="text-lg font-bold text-slate-800">Recent Detection History</h3>
+        </div>
+        <div class="overflow-x-auto p-5">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="text-slate-500 uppercase text-xs tracking-wider border-b border-slate-200">
+                        <th class="pb-3 font-semibold">Type</th>
+                        <th class="pb-3 font-semibold">Excerpt</th>
+                        <th class="pb-3 font-semibold">AI Score</th>
+                        <th class="pb-3 font-semibold">Classification</th>
+                        <th class="pb-3 font-semibold">Report</th>
+                    </tr>
+                </thead>
+                <tbody class="text-slate-700">
+                    {% for row in history %}
+                    <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                        <td class="py-3 uppercase font-semibold text-xs text-slate-500">{{ row[2] }}</td>
+                        <td class="py-3 truncate max-w-[200px]" title="{{ row[3] }}">{{ row[3] }}</td>
+                        <td class="py-3 font-semibold text-slate-800">{{ "%.1f"|format(row[4]) }}%</td>
+                        <td class="py-3">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold 
+                            {% if row[5] == 'Safe' %} bg-green-100 text-green-700
+                            {% elif row[5] == 'Low Risk' %} bg-blue-100 text-blue-700
+                            {% elif row[5] == 'Medium Risk' %} bg-yellow-100 text-yellow-700
+                            {% else %} bg-red-100 text-red-700 {% endif %}">
+                                {{ row[5] }}
+                            </span>
+                        </td>
+                        <td class="py-3 flex gap-3">
+    <a href="{{ url_for('export_report', history_id=row[0]) }}" class="text-blue-600 font-medium hover:underline text-xs">PDF</a>
+    <a href="{{ url_for('delete_history', id=row[0]) }}" class="text-red-500 font-medium hover:underline text-xs" onclick="return confirm('Delete this scan?')">Delete</a>
+</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('riskDistributionChart').getContext('2d');
+    const rawChartData = {{ (chart_data or {})|tojson }};
+    
+    // Ensure the chart doesn't break if there's no data yet
+    const labels = Object.keys(rawChartData).length > 0 ? Object.keys(rawChartData) : ['No Data'];
+    const dataValues = Object.keys(rawChartData).length > 0 ? Object.values(rawChartData) : [1];
+    const bgColors = Object.keys(rawChartData).length > 0 ? ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'] : ['#e2e8f0'];
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: dataValues,
+                backgroundColor: bgColors,
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } } },
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%'
+        }
+    });
+    function validatePayload() {
+        const payloadType = document.querySelector('select[name="type"]').value;
+        const contentInput = document.querySelector('textarea[name="content"]').value.trim().toLowerCase();
+
+        if (payloadType === 'url') {
+            // Agar sirf HTTPS likha hoga, to ye aage badhne se rok dega
+            if (!contentInput.startsWith('http://') && !contentInput.startsWith('https://')) {
+                alert('Invalid Input: Please enter a full URL starting with http:// or https://');
+                return false; // Form submit nahi hoga
+            }
+        }
+        return true;
+    }
+</script>
+{% endblock %}

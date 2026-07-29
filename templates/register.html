@@ -1,0 +1,24 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="max-w-md mx-auto card p-8 mt-12">
+    <div class="text-center mb-8">
+        <h2 class="text-2xl font-bold text-slate-800">Create Account</h2>
+        <p class="text-sm text-slate-500 mt-1">Register for an operator security profile</p>
+    </div>
+    <form action="{{ url_for('register') }}" method="POST" class="space-y-5">
+        <div>
+            <label class="block text-sm font-semibold mb-1 text-slate-700">Username</label>
+            <input type="text" name="username" required class="input-field" placeholder="Choose a username">
+        </div>
+        <div>
+            <label class="block text-sm font-semibold mb-1 text-slate-700">Email Address</label>
+            <input type="email" name="email" required class="input-field" placeholder="operator@domain.com">
+        </div>
+        <div>
+            <label class="block text-sm font-semibold mb-1 text-slate-700">Password</label>
+            <input type="password" name="password" required class="input-field" placeholder="Create a strong password">
+        </div>
+        <button type="submit" class="btn-primary mt-2">Create Profile</button>
+    </form>
+</div>
+{% endblock %}

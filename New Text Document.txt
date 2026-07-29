@@ -1,0 +1,14 @@
+@echo off
+:: 1. Apne project folder ka sahi path yahan daaliye
+cd /d "D:\cyber security\AI-Based Phishing Detection and URL Risk Analysis System"
+
+:: 2. Virtual Environment ko activate karne ke liye
+call venv\Scripts\activate
+
+:: 3. Browser me automatic dashboard kholne ke liye
+start http://127.0.0.1:5000/dashboard
+
+:: 4. Flask server start karne ke liye
+python app.py
+
+pause
