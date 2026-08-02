@@ -1,7 +1,7 @@
 Flask
-scikit-learn
-pandas
-numpy
-reportlab
-werkzeug
 gunicorn
+numpy
+pandas
+scikit-learn
+reportlab
+Werkzeug
