@@ -5,29 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PhishShield // Enterprise Security</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <script>
+        (function() {
+            const storedTheme = localStorage.getItem('phishshield-theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
+            document.documentElement.classList.add(`theme-${theme}`);
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
+        :root {
+            --bg: #f8fafc;
+            --text: #334155;
+            --muted: #64748b;
+            --card: #ffffff;
+            --surface: #f8fafc;
+            --border: #e2e8f0;
+            --input-bg: #f8fafc;
+            --input-border: #cbd5e1;
+            --input-text: #0f172a;
+            --nav-bg: #ffffff;
+            --footer-bg: #ffffff;
+            --alert-success-bg: #ecfdf5;
+            --alert-success-text: #166534;
+            --alert-success-border: #d1fae5;
+            --alert-danger-bg: #fef2f2;
+            --alert-danger-text: #991b1b;
+            --alert-danger-border: #fecaca;
+            --toggle-bg: transparent;
+            --toggle-border: #cbd5e1;
+            --toggle-text: #334155;
+        }
+        :root.theme-dark {
+            color-scheme: dark;
+            --bg: #0b1120;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --card: #111827;
+            --surface: #0f172a;
+            --border: #334155;
+            --input-bg: #111827;
+            --input-border: #475569;
+            --input-text: #e2e8f0;
+            --nav-bg: #111827;
+            --footer-bg: #111827;
+            --alert-success-bg: #08332d;
+            --alert-success-text: #a7f3d0;
+            --alert-success-border: #115e59;
+            --alert-danger-bg: #3f1d1d;
+            --alert-danger-text: #fecaca;
+            --alert-danger-border: #7f1d1d;
+            --toggle-bg: rgba(148, 163, 184, 0.08);
+            --toggle-border: #475569;
+            --toggle-text: #e2e8f0;
+        }
         body {
-            background-color: #f8fafc;
-            color: #334155;
+            background-color: var(--bg);
+            color: var(--text);
             font-family: 'Inter', sans-serif;
         }
         .card {
-            background-color: #ffffff;
+            background-color: var(--card);
             border-radius: 0.75rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border);
         }
         .input-field {
             width: 100%;
             padding: 0.65rem 1rem;
             border-radius: 0.5rem;
-            border: 1px solid #cbd5e1;
-            background-color: #f8fafc;
-            color: #0f172a;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--input-text);
             transition: all 0.2s ease;
         }
         .input-field:focus {
@@ -53,24 +106,128 @@
         .btn-primary:active {
             transform: scale(0.98);
         }
+        .theme-toggle-btn {
+            border: 1px solid var(--toggle-border);
+            background-color: var(--toggle-bg);
+            color: var(--toggle-text);
+            border-radius: 9999px;
+            padding: 0.5rem 0.9rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        .theme-toggle-btn:hover {
+            background-color: rgba(59, 130, 246, 0.08);
+        }
+        .theme-toggle-btn:focus-visible {
+            outline: 2px solid rgba(59, 130, 246, 0.5);
+            outline-offset: 2px;
+        }
+        .theme-dark .bg-slate-50 {
+            background-color: var(--surface) !important;
+        }
+        .theme-dark .bg-slate-100 {
+            background-color: #111827 !important;
+        }
+        .theme-dark .border-slate-200,
+        .theme-dark .border-slate-100 {
+            border-color: #475569 !important;
+        }
+        .theme-dark .text-slate-800,
+        .theme-dark .text-slate-700,
+        .theme-dark .text-slate-600,
+        .theme-dark .text-slate-500,
+        .theme-dark .text-slate-400 {
+            color: var(--muted) !important;
+        }
+        .theme-dark .text-slate-800 {
+            color: var(--text) !important;
+        }
+        .theme-dark .text-blue-600 {
+            color: #60a5fa !important;
+        }
+        .theme-dark .text-red-600 {
+            color: #fda4af !important;
+        }
+        .theme-dark .text-purple-600 {
+            color: #c4b5fd !important;
+        }
+        .theme-dark .hover\:bg-slate-50:hover {
+            background-color: #111827 !important;
+        }
+        .theme-dark .bg-green-100 {
+            background-color: #052e16 !important;
+        }
+        .theme-dark .text-green-700 {
+            color: #86efac !important;
+        }
+        .theme-dark .bg-blue-100 {
+            background-color: #0f172a !important;
+        }
+        .theme-dark .text-blue-700 {
+            color: #93c5fd !important;
+        }
+        .theme-dark .bg-yellow-100 {
+            background-color: #312e10 !important;
+        }
+        .theme-dark .text-yellow-700 {
+            color: #facc15 !important;
+        }
+        .theme-dark .bg-red-100 {
+            background-color: #331111 !important;
+        }
+        .theme-dark .text-red-700 {
+            color: #fca5a5 !important;
+        }
+        .theme-dark .bg-purple-100 {
+            background-color: #2c1348 !important;
+        }
+        .theme-dark .text-purple-700 {
+            color: #d8b4fe !important;
+        }
+        .theme-dark .bg-green-50 {
+            background-color: #064e3b !important;
+        }
+        .theme-dark .bg-red-50 {
+            background-color: #4c1d1d !important;
+        }
+        .theme-dark .text-green-700 {
+            color: #a7f3d0 !important;
+        }
+        .theme-dark .text-red-700 {
+            color: #fecaca !important;
+        }
+        .theme-dark .border-t,
+        .theme-dark .border-b,
+        .theme-dark .border-l {
+            border-color: #475569 !important;
+        }
+        .theme-dark footer {
+            background-color: var(--footer-bg);
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
-    <nav class="card mx-4 my-4 p-4 flex justify-between items-center">
+    <nav class="card mx-4 my-4 p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <a href="#" class="text-xl font-bold tracking-tight text-blue-700">
             PhishShield <span class="text-slate-400 font-normal ml-1 text-sm tracking-normal">Enterprise Edition</span>
         </a>
-        <div class="space-x-5 text-sm font-semibold">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-5 space-y-3 sm:space-y-0 text-sm font-semibold">
             {% if session.get('user_id') %}
-                <a href="{{ url_for('dashboard') }}" class="text-slate-600 hover:text-blue-600 transition">Dashboard</a>
-                {% if session.get('role') == 'admin' %}
-                    <a href="{{ url_for('admin_panel') }}" class="text-purple-600 hover:text-purple-700 transition">Admin Console</a>
-                {% endif %}
-                <a href="{{ url_for('logout') }}" class="text-red-600 hover:text-red-700 transition">Log Out</a>
+                <div class="flex flex-wrap gap-3 items-center">
+                    <a href="{{ url_for('dashboard') }}" class="text-slate-600 hover:text-blue-600 transition">Dashboard</a>
+                    {% if session.get('role') == 'admin' %}
+                        <a href="{{ url_for('admin_panel') }}" class="text-purple-600 hover:text-purple-700 transition">Admin Console</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="text-red-600 hover:text-red-700 transition">Log Out</a>
+                </div>
             {% else %}
-                <a href="{{ url_for('login') }}" class="text-slate-600 hover:text-blue-600 transition">Login</a>
-                <a href="{{ url_for('register') }}" class="text-slate-600 hover:text-blue-600 transition">Register</a>
+                <div class="flex flex-wrap gap-3 items-center">
+                    <a href="{{ url_for('login') }}" class="text-slate-600 hover:text-blue-600 transition">Login</a>
+                    <a href="{{ url_for('register') }}" class="text-slate-600 hover:text-blue-600 transition">Register</a>
+                </div>
             {% endif %}
+            <button type="button" id="themeToggle" class="theme-toggle-btn" aria-label="Toggle theme">Theme</button>
         </div>
     </nav>
 
@@ -93,5 +250,37 @@
     <footer class="text-center p-6 border-t border-slate-200 text-sm text-slate-500 font-medium">
         &copy; 2026 AI-Based Phishing Detection & URL Risk Assessment System
     </footer>
+    <script>
+        (function() {
+            const root = document.documentElement;
+            const toggleBtn = document.getElementById('themeToggle');
+            if (!toggleBtn) return;
+
+            const setTheme = (theme, persist = true) => {
+                root.classList.remove('theme-light', 'theme-dark');
+                root.classList.add(`theme-${theme}`);
+                root.setAttribute('data-theme', theme);
+                toggleBtn.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+                if (persist) localStorage.setItem('phishshield-theme', theme);
+            };
+
+            const storedTheme = localStorage.getItem('phishshield-theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initialTheme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
+
+            setTheme(initialTheme, false);
+
+            toggleBtn.addEventListener('click', () => {
+                const currentTheme = root.classList.contains('theme-dark') ? 'dark' : 'light';
+                setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+            });
+
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
+                if (!localStorage.getItem('phishshield-theme')) {
+                    setTheme(event.matches ? 'dark' : 'light', false);
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
