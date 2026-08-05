@@ -101,7 +101,7 @@ def analyze_url_lexical(url):
     # 1. ENTERPRISE TRUSTED DOMAIN WHITELIST
     # ---------------------------------------------------------
     clean_url = url.lower().strip()
-    trusted_domains = ['youtube.com', 'google.com', 'github.com', 'linkedin.com', 'wikipedia.org']
+    trusted_domains = ['youtube.com', 'google.com', 'github.com', 'linkedin.com', 'wikipedia.org', 'https://ai-based-phishing-detection-el4j.onrender.com/dashboard', 'https://chatgpt.com/', 'https://gemini.google.com/', 'https://dashboard.render.com/', 'https://www.instagram.com/', 'https://github.com/']
     domain_part = clean_url.replace('https://', '').replace('http://', '').split('/')[0]
     
     for safe_domain in trusted_domains:
