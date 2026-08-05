@@ -205,6 +205,73 @@
         .theme-dark footer {
             background-color: var(--footer-bg);
         }
+        [data-theme="dark"],
+        .theme-dark {
+            color-scheme: dark;
+        }
+        [data-theme="dark"] .input-field,
+        [data-theme="dark"] select,
+        [data-theme="dark"] textarea,
+        .theme-dark .input-field,
+        .theme-dark select,
+        .theme-dark textarea {
+            background-color: var(--input-bg) !important;
+            color: var(--input-text) !important;
+            border-color: var(--input-border) !important;
+            caret-color: var(--text) !important;
+        }
+        [data-theme="dark"] select option,
+        .theme-dark select option {
+            background-color: var(--input-bg) !important;
+            color: var(--input-text) !important;
+        }
+        [data-theme="dark"] select:focus,
+        [data-theme="dark"] input:focus,
+        [data-theme="dark"] textarea:focus,
+        .theme-dark select:focus,
+        .theme-dark input:focus,
+        .theme-dark textarea:focus {
+            background-color: var(--input-bg) !important;
+            color: var(--input-text) !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35) !important;
+        }
+        [data-theme="dark"] input::placeholder,
+        [data-theme="dark"] textarea::placeholder,
+        .theme-dark input::placeholder,
+        .theme-dark textarea::placeholder {
+            color: var(--muted) !important;
+            opacity: 1 !important;
+        }
+        [data-theme="dark"] label,
+        .theme-dark label,
+        [data-theme="dark"] .text-slate-800,
+        .theme-dark .text-slate-800 {
+            color: var(--text) !important;
+        }
+        [data-theme="dark"] .text-slate-700,
+        [data-theme="dark"] .text-slate-600,
+        [data-theme="dark"] .text-slate-500,
+        [data-theme="dark"] .text-slate-400,
+        .theme-dark .text-slate-700,
+        .theme-dark .text-slate-600,
+        .theme-dark .text-slate-500,
+        .theme-dark .text-slate-400 {
+            color: var(--muted) !important;
+        }
+        [data-theme="dark"] .card,
+        .theme-dark .card {
+            background-color: var(--card) !important;
+            border-color: var(--border) !important;
+        }
+        [data-theme="dark"] .border-green-200,
+        .theme-dark .border-green-200 {
+            border-color: #14532d !important;
+        }
+        [data-theme="dark"] .border-red-200,
+        .theme-dark .border-red-200 {
+            border-color: #7f1d1d !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
