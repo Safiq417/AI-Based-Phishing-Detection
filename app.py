@@ -4,6 +4,7 @@ import sqlite3
 import pickle
 import numpy as np
 from datetime import datetime
+from urllib.parse import urlparse
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 from reportlab.lib.pagesizes import letter
@@ -96,61 +97,76 @@ init_db()
 load_ml_components()
 
 # --- URL Analysis Helper Engine ---
-def analyze_url_lexical(url):
-    # ---------------------------------------------------------
-    # 1. ENTERPRISE TRUSTED DOMAIN WHITELIST
-    # ---------------------------------------------------------
-    clean_url = url.lower().strip()
-    trusted_domains = ['youtube.com', 'google.com', 'github.com', 'linkedin.com', 'wikipedia.org', 'https://ai-based-phishing-detection-el4j.onrender.com/dashboard', 'https://chatgpt.com/', 'https://gemini.google.com/', 'https://dashboard.render.com/', 'https://www.instagram.com/', 'https://github.com/']
-    domain_part = clean_url.replace('https://', '').replace('http://', '').split('/')[0]
-    
-    for safe_domain in trusted_domains:
-        if safe_domain in domain_part:
-            return {
-                "is_ip": 0, "is_shortened": 0, "suspicious_tld": 0,
-                "excessive_subdomains": 0, "no_https": 0, 
-                "score_deduction": 0,
-                "is_whitelisted": True  # Custom bypass flag for the route
-            }
-    # ---------------------------------------------------------
+def is_valid_url(url):
+    try:
+        parsed = urlparse(url.strip())
+        if parsed.scheme not in ('http', 'https'):
+            return False
+        if not parsed.netloc:
+            return False
+        if parsed.netloc.startswith('.') or parsed.netloc.endswith('.'):
+            return False
+        if '@' in parsed.netloc and parsed.hostname is None:
+            return False
+        return True
+    except Exception:
+        return False
 
-    # 2. Your core lexical analysis rules continue here
+
+def analyze_url_lexical(url):
+    url = url.strip()
+    parsed = urlparse(url)
+    hostname = (parsed.hostname or '').lower()
+    normalized = url.lower()
+
     report = {
         "is_ip": 0, "is_shortened": 0, "suspicious_tld": 0,
         "excessive_subdomains": 0, "no_https": 0, "score_deduction": 0
     }
-    
-    # Check IP-based URLs
-    ip_pattern = re.compile(r'https?://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
-    if ip_pattern.match(url):
+
+    # IP-based URL check
+    if re.match(r'^\d{1,3}(?:\.\d{1,3}){3}$', hostname):
         report["is_ip"] = 1
         report["score_deduction"] += 30
-        
-    # Check Shortening Services
+
+    # @-symbol embedded userinfo or suspicious URL form
+    if '@' in url:
+        report["score_deduction"] += 30
+
+    # URL shortening services
     shorteners = ['bit.ly', 'goo.gl', 'tinyurl.com', 't.co', 'is.gd', 'buff.ly', 'adf.ly']
-    if any(s in url.lower() for s in shorteners):
+    if any(hostname.endswith(shortener) for shortener in shorteners) or any(shortener in normalized for shortener in shorteners):
         report["is_shortened"] = 1
-        report["score_deduction"] += 25
-        
-    # Check Suspicious TLDs
+        report["score_deduction"] += 20
+
+    # Suspicious top-level domains
     suspicious_tlds = ['.xyz', '.top', '.club', '.gq', '.ml', '.cf', '.tk', '.info', '.download']
-    if any(url.lower().endswith(tld) or tld + '/' in url.lower() for tld in suspicious_tlds):
+    if any(hostname.endswith(tld) for tld in suspicious_tlds):
         report["suspicious_tld"] = 1
         report["score_deduction"] += 20
-        
-    # Check Excessive Subdomains
-    clean_url_parts = url.replace("https://", "").replace("http://", "")
-    domain_part = clean_url_parts.split('/')[0]
-    subdomains = domain_part.split('.')
+
+    # Excessive subdomains
+    subdomains = [part for part in hostname.split('.') if part]
     if len(subdomains) > 4:
         report["excessive_subdomains"] = 1
         report["score_deduction"] += 15
-        
-    # Check HTTPS usage
-    if url.lower().startswith("http://"):
+
+    # Plain HTTP usage is weaker than HTTPS
+    if parsed.scheme == 'http':
         report["no_https"] = 1
         report["score_deduction"] += 10
-        
+
+    # Suspicious or obfuscated URL content
+    suspicious_keywords = ['verify', 'bank', 'secure', 'login', 'update', 'account', 'paypal', 'giftcard', 'free', 'wp-admin', 'reset', 'billing', 'confirm', 'signin']
+    if any(keyword in normalized for keyword in suspicious_keywords):
+        report["score_deduction"] += 10
+
+    if len(url) > 100:
+        report["score_deduction"] += 10
+
+    if re.search(r'%[0-9a-fA-F]{2}', url):
+        report["score_deduction"] += 10
+
     return report
 
 
@@ -243,46 +259,71 @@ def dashboard():
     
 # Form Inference Processing
     if request.method == 'POST':
-            input_type = request.form['type']  # 'text' or 'url'
-            content = request.form['content'].strip()
+        input_type = request.form['type']  # 'text' or 'url'
+        content = request.form['content'].strip()
 
-            # --- START OF THE NEW CODE YOU PASTE ---
-            trusted_domains = ['youtube.com', 'google.com', 'github.com', 'linkedin.com', 'wikipedia.org']
-            is_whitelisted = False
-            
-            if input_type == 'url':
-                for domain in trusted_domains:
-                    if domain in content.lower():
-                        is_whitelisted = True
-                        break
+        base_score = 0.0
+        reasons = []
 
-            base_score = 0.0
-            
-            if is_whitelisted:
-                base_score = 0.0
-                risk_level = "Safe"
-            else:
-                if model and vectorizer and content:
-                    vectorized_input = vectorizer.transform([content])
-                    base_score = float(model.predict_proba(vectorized_input)[0][1] * 100)
-                else:
-                    suspicious_keywords = ['verify', 'bank', 'secure', 'login', 'wp-admin', 'paypal', 'giftcard', 'free']
-                    match_count = sum(1 for word in suspicious_keywords if word in content.lower())
-                    base_score = min(match_count * 25.0, 100.0)
-
-                if input_type == 'url':
-                    url_features = analyze_url_lexical(content)
-                    base_score = min(base_score + url_features["score_deduction"], 100.0)
-
-                risk_level = calculate_risk_level(base_score)
-            # --- END OF THE NEW CODE ---
-
-            # Save into processing history pipeline (Your original code continues here)
-            c.execute("INSERT INTO history (user_id, input_type, content, score, risk_level) VALUES (?, ?, ?, ?, ?)",
-                      (session['user_id'], input_type, content, base_score, risk_level))
-            conn.commit()
-            log_activity(session['user_id'], f"Processed analysis for {input_type} evaluation engine.")
+        if input_type == 'url' and not is_valid_url(content):
+            flash("Invalid URL format. Please submit a full URL beginning with http:// or https://", "danger")
+            conn.close()
             return redirect(url_for('dashboard'))
+
+        if model and vectorizer and content:
+            vectorized_input = vectorizer.transform([content])
+            phishing_label_index = int(np.where(model.classes_ == 1)[0][0]) if 1 in model.classes_ else 1
+            phishing_prob = float(model.predict_proba(vectorized_input)[0][phishing_label_index])
+            if phishing_prob > 0.45:
+                base_score = (phishing_prob - 0.45) * 100
+                reasons.append("ML model indicates phishing-like patterns")
+            else:
+                base_score = 0.0
+                reasons.append("ML model does not strongly indicate phishing")
+        else:
+            base_score = 0.0
+            if input_type == 'text':
+                suspicious_keywords = ['verify', 'bank', 'secure', 'login', 'wp-admin', 'paypal', 'giftcard', 'free', 'update', 'billing', 'account']
+                match_count = sum(1 for word in suspicious_keywords if word in content.lower())
+                base_score = min(match_count * 15.0, 100.0)
+                if match_count:
+                    reasons.append("Text content includes suspicious keywords")
+                else:
+                    reasons.append("No strong phishing keywords detected in text")
+
+        if input_type == 'url':
+            url_features = analyze_url_lexical(content)
+            heuristic_score = url_features["score_deduction"]
+            base_score = min(base_score + heuristic_score, 100.0)
+
+            if url_features.get("is_ip"):
+                reasons.append("URL uses a raw IP address")
+            if '@' in content:
+                reasons.append("URL contains an '@' symbol")
+            if url_features.get("is_shortened"):
+                reasons.append("URL uses a known shortening service")
+            if url_features.get("suspicious_tld"):
+                reasons.append("URL uses a suspicious top-level domain")
+            if url_features.get("excessive_subdomains"):
+                reasons.append("URL contains excessive subdomains")
+            if url_features.get("no_https"):
+                reasons.append("URL uses insecure HTTP")
+            if len(content) > 100:
+                reasons.append("URL length is unusually long")
+            if re.search(r'%[0-9a-fA-F]{2}', content):
+                reasons.append("URL contains encoded or obfuscated characters")
+
+        if base_score == 0.0:
+            reasons.append("Overall analysis indicates a low-risk result")
+
+        risk_level = calculate_risk_level(base_score)
+        if reasons:
+            flash("Analysis reasons: " + "; ".join(reasons), "success")
+        c.execute("INSERT INTO history (user_id, input_type, content, score, risk_level) VALUES (?, ?, ?, ?, ?)",
+                  (session['user_id'], input_type, content, base_score, risk_level))
+        conn.commit()
+        log_activity(session['user_id'], f"Processed analysis for {input_type} evaluation engine.")
+        return redirect(url_for('dashboard'))
 
     # Fetch User Statistics Context
     c.execute("SELECT COUNT(*) FROM history WHERE user_id = ?", (session['user_id'],))
