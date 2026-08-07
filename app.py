@@ -496,6 +496,10 @@ def ai_chat():
     if not isinstance(history, list):
         history = []
 
+# Developer identity aur user context
+    developer_name = "Safiq Ansari and Team"
+    current_user = session.get('username', 'User')
+
     system_prompt = (
         "You are PhishShield AI, a cybersecurity assistant for a phishing detection application. "
         "Answer clearly for beginners, explain phishing, malicious URLs, malware, ransomware, passwords, MFA, social engineering, network security, SOC, and related security topics. "

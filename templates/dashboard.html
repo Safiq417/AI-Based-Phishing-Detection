@@ -143,10 +143,23 @@
     const ctx = document.getElementById('riskDistributionChart').getContext('2d');
     const rawChartData = {{ (chart_data or {})|tojson }};
     
-    // Ensure the chart doesn't break if there's no data yet
-    const labels = Object.keys(rawChartData).length > 0 ? Object.keys(rawChartData) : ['No Data'];
-    const dataValues = Object.keys(rawChartData).length > 0 ? Object.values(rawChartData) : [1];
-    const bgColors = Object.keys(rawChartData).length > 0 ? ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'] : ['#e2e8f0'];
+    // Label-wise exact color mapping
+    const riskColors = {
+        'Safe': '#10b981',        // Green
+        'Low Risk': '#3b82f6',     // Blue
+        'Medium Risk': '#f59e0b',  // Orange
+        'High Risk': '#ef4444',    // Red
+        'Critical': '#b91c1c'      // Dark Red
+    };
+
+    const hasData = Object.keys(rawChartData).length > 0;
+    const labels = hasData ? Object.keys(rawChartData) : ['No Data'];
+    const dataValues = hasData ? Object.values(rawChartData) : [1];
+
+    // Har label ko uska exact fixed color milega
+    const bgColors = hasData 
+        ? labels.map(label => riskColors[label] || '#8b5cf6') 
+        : ['#e2e8f0'];
 
     new Chart(ctx, {
         type: 'doughnut',
@@ -160,7 +173,12 @@
             }]
         },
         options: {
-            plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } } },
+            plugins: { 
+                legend: { 
+                    position: 'right', 
+                    labels: { boxWidth: 12, font: { size: 10 } } 
+                } 
+            },
             responsive: true,
             maintainAspectRatio: false,
             cutout: '70%'
