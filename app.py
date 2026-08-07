@@ -31,6 +31,18 @@ os.makedirs('model', exist_ok=True)
 model = None
 vectorizer = None
 
+def get_db():
+    """Central DB connection helper.
+    timeout=15 -> if DB is briefly locked by another request, SQLite will
+    wait/retry for up to 15s instead of raising 'database is locked' immediately.
+    WAL mode -> allows concurrent readers + a writer, much more resilient
+    under multiple Gunicorn workers/threads than the default journal mode.
+    """
+    conn = sqlite3.connect(DB_PATH, timeout=15)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA busy_timeout=15000;")
+    return conn
+
 def load_ml_components():
     global model, vectorizer
     try:
@@ -44,7 +56,7 @@ def load_ml_components():
 
 # Database Initialization
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -185,11 +197,19 @@ def calculate_risk_level(score):
 
 # --- System Audit Logger ---
 def log_activity(user_id, action):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("INSERT INTO logs (user_id, action) VALUES (?, ?)", (user_id, action))
-    conn.commit()
-    conn.close()
+    """Logs an action. Never lets a DB hiccup (e.g. transient lock) break
+    the calling route - logging is best-effort, not critical-path."""
+    conn = None
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("INSERT INTO logs (user_id, action) VALUES (?, ?)", (user_id, action))
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass
+    finally:
+        if conn:
+            conn.close()
 
 # --- Core Web Routes ---
 @app.route('/')
@@ -209,18 +229,24 @@ def register():
             
         hashed_password = generate_password_hash(password)
         
+        conn = None
         try:
-            conn = sqlite3.connect(DB_PATH)
+            conn = get_db()
             c = conn.cursor()
             c.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", 
                       (username, email, hashed_password))
             conn.commit()
-            conn.close()
             flash("Registration successful. Please login.", "success")
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
             flash("Username or Email address profile identity collision detected.", "danger")
             return redirect(url_for('register'))
+        except sqlite3.OperationalError:
+            flash("Server is busy right now, please try registering again in a moment.", "danger")
+            return redirect(url_for('register'))
+        finally:
+            if conn:
+                conn.close()
             
     return render_template('register.html')
 
@@ -230,7 +256,7 @@ def login():
         username = request.form['username'].strip()
         password = request.form['password']
         
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db()
         c = conn.cursor()
         c.execute("SELECT * FROM users WHERE username = ?", (username,))
         user = c.fetchone()
@@ -251,7 +277,10 @@ def login():
 @app.route('/logout')
 def logout():
     if 'user_id' in session:
-        log_activity(session['user_id'], "User signed out of system session.")
+        try:
+            log_activity(session['user_id'], "User signed out of system session.")
+        except Exception:
+            pass  # logging failure should never block logout
     session.clear()
     return redirect(url_for('login'))
 
@@ -260,7 +289,7 @@ def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     c = conn.cursor()
     
 # Form Inference Processing
@@ -353,7 +382,7 @@ def export_report(history_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     c = conn.cursor()
     c.execute("SELECT * FROM history WHERE id = ?", (history_id,))
     record = c.fetchone()
@@ -403,7 +432,7 @@ def admin_panel():
     if 'role' not in session or session['role'] != 'admin':
         return "Access Violation. Privileged personnel authorization vector required.", 403
         
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     c = conn.cursor()
     
     c.execute("SELECT id, username, email, role FROM users")
@@ -423,7 +452,7 @@ def admin_panel():
 def delete_user(user_id):
     if 'role' not in session or session['role'] != 'admin':
         return "Access Denial Matrix Activated.", 403
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     c = conn.cursor()
     c.execute("DELETE FROM users WHERE id = ? AND role != 'admin'", (user_id,))
     conn.commit()
@@ -435,7 +464,7 @@ def delete_history(id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     c = conn.cursor()
     # Ensure the user only deletes their own data!
     c.execute("DELETE FROM history WHERE id = ? AND user_id = ?", (id, session['user_id']))
