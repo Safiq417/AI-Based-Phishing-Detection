@@ -5,7 +5,13 @@ import pickle
 import numpy as np
 from datetime import datetime
 from urllib.parse import urlparse
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
+import time
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
+
+try:
+    import requests
+except ImportError:
+    requests = None
 from werkzeug.security import generate_password_hash, check_password_hash
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
@@ -274,8 +280,8 @@ def dashboard():
             vectorized_input = vectorizer.transform([content])
             phishing_label_index = int(np.where(model.classes_ == 1)[0][0]) if 1 in model.classes_ else 1
             phishing_prob = float(model.predict_proba(vectorized_input)[0][phishing_label_index])
-            if phishing_prob > 0.45:
-                base_score = (phishing_prob - 0.45) * 100
+            if phishing_prob > 0.60:
+                base_score = max(0.0, (phishing_prob - 0.60) * 120)
                 reasons.append("ML model indicates phishing-like patterns")
             else:
                 base_score = 0.0
@@ -437,6 +443,129 @@ def delete_history(id):
     conn.close()
     flash("Record removed from history.", "success")
     return redirect(url_for('dashboard'))
+
+@app.route('/ai-chat', methods=['POST'])
+def ai_chat():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Authentication required.'}), 401
+
+    if requests is None:
+        return jsonify({'error': 'AI service not configured. Please install the requests library and set GROQ_API_KEY.'}), 500
+
+    api_key = os.environ.get('GROQ_API_KEY') or os.environ.get('GROK_API_KEY')
+    if not api_key:
+        return jsonify({'error': 'AI provider API key missing. Please set GROQ_API_KEY or GROK_API_KEY.'}), 500
+
+    payload = request.json or {}
+    user_message = payload.get('message', '').strip()
+    context = payload.get('context', {})
+
+    if not user_message:
+        return jsonify({'error': 'Message cannot be empty.'}), 400
+
+    history = context.get('history', [])
+    if not isinstance(history, list):
+        history = []
+
+    system_prompt = (
+        "You are PhishShield AI, a cybersecurity assistant for a phishing detection application. "
+        "Answer clearly for beginners, explain phishing, malicious URLs, malware, ransomware, passwords, MFA, social engineering, network security, SOC, and related security topics. "
+        "If the user asks about the current URL analysis, use the provided analysis details from context to explain risk results and suspicious indicators. "
+        "Do not mention any internal errors or API keys. Keep responses helpful and concise. "
+        "Always reply in plain text only. Do not use markdown, bold, tables, or any special formatting characters."
+    )
+
+    analysis_context = context.get('analysis')
+    if analysis_context:
+        analysis_text = (
+            "\n\nCurrent URL analysis details:\n"
+            f"Type: {analysis_context.get('type','N/A')}\n"
+            f"Content: {analysis_context.get('content','N/A')}\n"
+            f"Score: {analysis_context.get('score','N/A')}\n"
+            f"Risk Level: {analysis_context.get('risk_level','N/A')}\n"
+            f"Details: {analysis_context.get('details','N/A')}\n"
+        )
+    else:
+        analysis_text = ''
+
+    prompt_lines = [system_prompt.strip()]
+    if analysis_text:
+        prompt_lines.append(analysis_text.strip())
+    if history:
+        prompt_lines.append("\nConversation history:")
+        for item in history:
+            if not item.get('role') or not item.get('content'):
+                continue
+            role = item['role']
+            label = 'User' if role == 'user' else 'Assistant' if role == 'assistant' else role.capitalize()
+            prompt_lines.append(f"{label}: {item['content']}")
+    prompt_lines.append(f"User: {user_message}")
+    prompt_text = "\n".join(prompt_lines)
+
+    GROQ_API_URL = os.environ.get('GROQ_API_URL', 'https://api.groq.com/openai/v1/responses')
+    model_name = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-20b')
+    headers = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+    }
+    payload = {
+        'model': model_name,
+        'input': prompt_text,
+        'temperature': 0.6,
+        'max_output_tokens': 400,
+    }
+
+    def try_send_with_retries(url, headers, payload, max_retries=3):
+        last_exc = None
+        for attempt in range(1, max_retries + 1):
+            try:
+                response = requests.post(url, headers=headers, json=payload, timeout=20)
+                if response.status_code == 200:
+                    return response.json()
+                body = response.text
+                if response.status_code in (429, 500, 502, 503, 504):
+                    last_exc = Exception(f'Grok API error {response.status_code}: {body}')
+                    time.sleep(1 << (attempt - 1))
+                    continue
+                try:
+                    error_json = response.json()
+                    error_message = error_json.get('error') or error_json.get('message') or body
+                except ValueError:
+                    error_message = body
+                raise Exception(f'Grok API error {response.status_code}: {error_message}')
+            except requests.exceptions.RequestException as e:
+                last_exc = e
+                if attempt < max_retries:
+                    time.sleep(1 << (attempt - 1))
+                    continue
+                raise
+        raise last_exc
+
+    try:
+        response_json = try_send_with_retries(GROQ_API_URL, headers, payload, max_retries=4)
+        assistant_text = response_json.get('output_text', '')
+        if not assistant_text:
+            output_blocks = response_json.get('output', []) or []
+            texts = []
+            for block in output_blocks:
+                for content in block.get('content', []):
+                    if content.get('type') in ('output_text', 'text') and content.get('text'):
+                        texts.append(content['text'])
+            assistant_text = '\n'.join(texts).strip()
+
+        # Remove common markdown artifacts so the response stays plain text.
+        assistant_text = assistant_text.replace('**', '').replace('__', '')
+        assistant_text = assistant_text.replace('`', '')
+        assistant_text = assistant_text.replace('|', '').replace('---', '')
+        assistant_text = assistant_text.replace('* ', '- ')
+        assistant_text = assistant_text.strip()
+
+        assistant_text = assistant_text or 'No response received from the AI model.'
+        return jsonify({'reply': assistant_text, 'history': history + [{'role': 'user', 'content': user_message}, {'role': 'assistant', 'content': assistant_text}]})
+    except Exception as e:
+        return jsonify({'error': 'AI service unavailable. ' + str(e)}), 500
+
 if __name__ == '__main__':
     # Fallback initialization check
     if not os.path.exists('model/phishing_model.pkl'):

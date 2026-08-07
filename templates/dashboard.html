@@ -21,8 +21,20 @@
         <h3 class="text-lg font-bold mb-4 text-slate-800 border-b pb-2">New Analysis</h3>
         <form action="{{ url_for('dashboard') }}" method="POST" class="space-y-4" onsubmit="return validatePayload()">
             <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1">Payload Type</label>
-                <select name="type" class="input-field">
+                <label class="block text-sm font-semibold text-slate-700 mb-1" for="payloadTypeButton">Payload Type</label>
+                <div class="relative">
+                    <button id="payloadTypeButton" type="button" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="payloadTypeLabel" class="input-field payload-select-button flex w-full items-center justify-between pr-3 text-left bg-white dark:bg-slate-950">
+                        <span id="payloadTypeLabel" class="truncate payload-select-label">Email / SMS Content</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4 text-slate-500 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div id="payloadTypeList" role="listbox" tabindex="-1" aria-labelledby="payloadTypeLabel" class="absolute left-0 right-0 z-20 mt-2 hidden max-h-52 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-lg ring-1 ring-slate-900/5 dark:border-slate-700 dark:bg-slate-900">
+                        <div class="payload-option cursor-pointer px-4 py-3 text-slate-900 bg-white hover:bg-slate-100 dark:text-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800" role="option" data-value="text" data-label="Email / SMS Content" tabindex="0" aria-selected="true">Email / SMS Content</div>
+                        <div class="payload-option cursor-pointer px-4 py-3 text-slate-900 bg-white hover:bg-slate-100 dark:text-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800" role="option" data-value="url" data-label="Web URL" tabindex="0">Web URL</div>
+                    </div>
+                </div>
+                <select name="type" id="payloadTypeSelect" class="hidden">
                     <option value="text">Email / SMS Content</option>
                     <option value="url">Web URL</option>
                 </select>
@@ -77,6 +89,56 @@
     </div>
 </div>
 
+<div id="phishshieldChatWidget" class="fixed right-4 bottom-4 z-50 flex flex-col items-end sm:right-6 sm:bottom-6">
+    <button id="chatToggleBtn" type="button" aria-expanded="false" aria-controls="chatPanel" class="group inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200">
+        <span>PhishShield AI</span>
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-white transition group-hover:bg-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:group-hover:bg-slate-800">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 10h.01M12 10h.01M16 10h.01" />
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+        </span>
+    </button>
+
+    <div id="chatPanel" class="mt-3 hidden w-full min-w-[320px] max-w-sm rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 ring-1 ring-slate-900/5 dark:border-slate-700 dark:bg-slate-950 dark:ring-slate-900/20 sm:max-w-md">
+        <div class="flex items-center justify-between rounded-t-3xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+            <span>PhishShield AI Assistant</span>
+            <button id="chatCloseBtn" type="button" aria-label="Close chat" class="text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">✕</button>
+        </div>
+        <div id="chatMessages" class="min-h-[240px] max-h-80 space-y-3 overflow-y-auto bg-slate-50 px-4 py-4 text-sm text-slate-800 dark:bg-slate-900 dark:text-slate-100">
+            <div class="rounded-3xl bg-slate-100 px-4 py-3 text-slate-700 shadow-sm dark:bg-slate-800 dark:text-slate-200">
+                <p class="whitespace-pre-wrap text-sm">Ask me about your latest URL analysis, phishing risk, or cybersecurity best practices.</p>
+            </div>
+        </div>
+        <div class="border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+            <div class="flex items-center gap-2">
+                <textarea id="chatInput" rows="1" placeholder="Ask about phishing, URL analysis, or security best practices..." class="input-field chat-input-textarea min-h-[44px] max-h-[160px] w-full min-w-0 flex-1 resize-none rounded-2xl px-4 text-sm leading-[1.45] placeholder-slate-500 text-slate-900 dark:placeholder-slate-400 dark:bg-slate-900 dark:text-slate-100 box-border overflow-y-hidden" aria-label="Chat message"></textarea>
+                <button id="chatSendBtn" type="button" class="chat-send-button inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-blue-500 dark:hover:bg-blue-400" aria-label="Send message">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[0.72rem] text-slate-500 dark:text-slate-400">
+                <span id="chatStatus">Ask me about the analysis or cybersecurity topics.</span>
+                <button id="chatClearBtn" type="button" class="text-slate-600 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100">Clear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const latestAnalysisContext = {{ (history[0] if history|length > 0 else None) | tojson }};
+    const analysisDetails = latestAnalysisContext ? {
+        type: latestAnalysisContext[2],
+        content: latestAnalysisContext[3],
+        score: latestAnalysisContext[4],
+        risk_level: latestAnalysisContext[5],
+        details: 'Recent analysis result from the dashboard history.'
+    } : null;
+</script>
+
 <script>
     const ctx = document.getElementById('riskDistributionChart').getContext('2d');
     const rawChartData = {{ (chart_data or {})|tojson }};
@@ -117,5 +179,403 @@
         }
         return true;
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const button = document.getElementById('payloadTypeButton');
+        const listbox = document.getElementById('payloadTypeList');
+        const select = document.getElementById('payloadTypeSelect');
+        const label = document.getElementById('payloadTypeLabel');
+        const options = Array.from(document.querySelectorAll('.payload-option'));
+
+        if (!button || !listbox || !select || !label) return;
+
+        const closeList = () => {
+            button.setAttribute('aria-expanded', 'false');
+            listbox.classList.add('hidden');
+            button.querySelector('svg').style.transform = 'rotate(0deg)';
+        };
+
+        const openList = () => {
+            button.setAttribute('aria-expanded', 'true');
+            listbox.classList.remove('hidden');
+            button.querySelector('svg').style.transform = 'rotate(180deg)';
+            options[0].focus();
+        };
+
+        const selectOption = (option) => {
+            const value = option.getAttribute('data-value');
+            const text = option.getAttribute('data-label');
+            select.value = value;
+            label.textContent = text;
+            options.forEach(opt => opt.classList.remove('bg-slate-100', 'dark:bg-slate-800'));
+            option.classList.add('bg-slate-100', 'dark:bg-slate-800');
+            closeList();
+        };
+
+        button.addEventListener('click', function() {
+            listbox.classList.contains('hidden') ? openList() : closeList();
+        });
+
+        button.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openList();
+            }
+        });
+
+        options.forEach(option => {
+            option.addEventListener('click', function() {
+                selectOption(this);
+            });
+            option.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    selectOption(this);
+                }
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    const next = options[options.indexOf(this) + 1] || options[0];
+                    next.focus();
+                }
+                if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    const prev = options[options.indexOf(this) - 1] || options[options.length - 1];
+                    prev.focus();
+                }
+                if (event.key === 'Escape') {
+                    closeList();
+                    button.focus();
+                }
+            });
+        });
+
+        document.addEventListener('click', function(event) {
+            if (!button.contains(event.target) && !listbox.contains(event.target)) {
+                closeList();
+            }
+        });
+    });
+
+    function appendChatMessage(role, text, animate = true) {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+        const wrapper = document.createElement('div');
+        wrapper.className = role === 'assistant'
+            ? 'chat-message-bubble chat-message-assistant rounded-3xl bg-slate-100 px-4 py-3 text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-100'
+            : 'chat-message-bubble chat-message-user rounded-3xl bg-blue-600 px-4 py-3 text-white shadow-sm';
+        if (animate) {
+            wrapper.classList.add('chat-message-animate');
+        }
+        wrapper.innerHTML = `<p class="whitespace-pre-wrap text-sm m-0">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+        chatMessages.appendChild(wrapper);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return null;
+        const typingWrapper = document.createElement('div');
+        typingWrapper.id = 'chatTypingIndicator';
+        typingWrapper.className = 'chat-message-bubble chat-message-assistant rounded-3xl bg-slate-100 px-4 py-3 text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-100 chat-message-animate';
+        typingWrapper.innerHTML = `<p class="whitespace-pre-wrap text-sm m-0">Typing...</p>`;
+        chatMessages.appendChild(typingWrapper);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return typingWrapper;
+    }
+
+    function removeTypingIndicator() {
+        const typingWrapper = document.getElementById('chatTypingIndicator');
+        if (typingWrapper) {
+            typingWrapper.remove();
+        }
+    }
+
+    function resizeChatInput(input) {
+        if (!input) return;
+        const minHeight = 44;
+        const maxHeight = 160;
+        input.style.height = 'auto';
+        const targetHeight = Math.max(minHeight, Math.min(input.scrollHeight, maxHeight));
+        input.style.height = `${targetHeight}px`;
+        input.style.overflowY = input.scrollHeight > maxHeight ? 'auto' : 'hidden';
+    }
+
+    function resetChatInputHeight(input) {
+        if (!input) return;
+        input.style.height = '44px';
+        input.style.overflowY = 'hidden';
+    }
+
+    async function sendChatMessage() {
+        const input = document.getElementById('chatInput');
+        const statusLabel = document.getElementById('chatStatus');
+        if (!input || !statusLabel) return;
+        const message = input.value.trim();
+        if (!message) {
+            return;
+        }
+
+        appendChatMessage('user', message);
+        input.value = '';
+        resetChatInputHeight(input);
+        statusLabel.textContent = 'Typing...';
+        const typingIndicator = showTypingIndicator();
+
+        const contextPayload = {
+            history: [],
+            analysis: analysisDetails
+        };
+
+        try {
+            const response = await fetch('{{ url_for('ai_chat') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message, context: contextPayload })
+            });
+            const result = await response.json();
+            removeTypingIndicator();
+
+            if (!response.ok || result.error) {
+                const errorText = result.error || 'Unable to reach AI assistant.';
+                appendChatMessage('assistant', errorText);
+                statusLabel.textContent = 'AI assistant error.';
+                return;
+            }
+
+            appendChatMessage('assistant', result.reply || 'No reply received.');
+            statusLabel.textContent = 'Ready for another question.';
+        } catch (error) {
+            removeTypingIndicator();
+            appendChatMessage('assistant', 'Network error while contacting AI service.');
+            statusLabel.textContent = 'Network error.';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatToggleBtn = document.getElementById('chatToggleBtn');
+        const chatPanel = document.getElementById('chatPanel');
+        const chatCloseBtn = document.getElementById('chatCloseBtn');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+        const chatInput = document.getElementById('chatInput');
+        const chatClearBtn = document.getElementById('chatClearBtn');
+        const statusLabel = document.getElementById('chatStatus');
+
+        if (chatToggleBtn && chatPanel) {
+            chatToggleBtn.addEventListener('click', function() {
+                const isOpen = !chatPanel.classList.contains('hidden');
+                chatPanel.classList.toggle('hidden');
+                chatToggleBtn.setAttribute('aria-expanded', String(!isOpen));
+            });
+        }
+
+        if (chatCloseBtn && chatPanel) {
+            chatCloseBtn.addEventListener('click', function() {
+                chatPanel.classList.add('hidden');
+                if (chatToggleBtn) {
+                    chatToggleBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        if (chatSendBtn && chatInput) {
+            chatSendBtn.addEventListener('click', sendChatMessage);
+            chatInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    sendChatMessage();
+                }
+            });
+            chatInput.addEventListener('input', function() {
+                resizeChatInput(chatInput);
+            });
+            chatInput.addEventListener('paste', function() {
+                setTimeout(() => resizeChatInput(chatInput), 0);
+            });
+            if (chatInput.value.trim()) {
+                resizeChatInput(chatInput);
+            } else {
+                resetChatInputHeight(chatInput);
+            }
+        }
+
+        if (chatClearBtn) {
+            chatClearBtn.addEventListener('click', function() {
+                const chatMessages = document.getElementById('chatMessages');
+                if (chatMessages) {
+                    chatMessages.innerHTML = '';
+                }
+                if (statusLabel) {
+                    statusLabel.textContent = 'Ask me about the analysis or cybersecurity topics.';
+                }
+                if (chatInput) {
+                    chatInput.value = '';
+                    resetChatInputHeight(chatInput);
+                }
+            });
+        }
+    });
 </script>
+<style>
+    .payload-select-button {
+        color: #0f172a;
+        background-color: #ffffff;
+        border-color: #cbd5e1;
+        box-shadow: none;
+    }
+    .payload-select-button:hover,
+    .payload-select-button:focus,
+    .payload-select-button:focus-visible,
+    .payload-select-button:active {
+        color: #0f172a;
+        background-color: #ffffff;
+        border-color: #cbd5e1;
+        box-shadow: none;
+        outline: none;
+    }
+    .payload-select-button:focus-visible,
+    .payload-select-button:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+    .payload-select-button span,
+    .payload-select-label,
+    .payload-option {
+        color: #0f172a !important;
+    }
+    .payload-select-button svg {
+        color: #64748b;
+    }
+    .payload-option {
+        background-color: #ffffff !important;
+    }
+    .payload-option:hover,
+    .payload-option[aria-selected="true"] {
+        background-color: #f8fafc !important;
+    }
+    [data-theme="dark"] .payload-select-button,
+    .theme-dark .payload-select-button {
+        color: #f8fafc !important;
+        background-color: #111827 !important;
+        border-color: #475569 !important;
+        box-shadow: none !important;
+    }
+    [data-theme="dark"] .payload-select-button:hover,
+    .theme-dark .payload-select-button:hover,
+    [data-theme="dark"] .payload-select-button:focus,
+    .theme-dark .payload-select-button:focus,
+    [data-theme="dark"] .payload-select-button:focus-visible,
+    .theme-dark .payload-select-button:focus-visible,
+    [data-theme="dark"] .payload-select-button:active,
+    .theme-dark .payload-select-button:active {
+        color: #f8fafc !important;
+        background-color: #111827 !important;
+        border-color: #475569 !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    [data-theme="dark"] .payload-option,
+    .theme-dark .payload-option {
+        color: #f8fafc !important;
+        background-color: #111827 !important;
+    }
+    [data-theme="dark"] .payload-option:hover,
+    .theme-dark .payload-option:hover {
+        background-color: #1f2937 !important;
+    }
+
+    #chatMessages {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding-bottom: 1rem;
+    }
+    .chat-message-bubble {
+        display: flex;
+        flex-direction: column;
+        max-width: 85%;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+    }
+    .chat-message-bubble p {
+        margin: 0;
+    }
+    .chat-message-assistant {
+        align-self: flex-start;
+    }
+    .chat-message-user {
+        align-self: flex-end;
+        max-width: 85%;
+        background-color: #2563eb !important;
+    }
+    .chat-message-user p,
+    .chat-message-assistant p {
+        word-break: break-word;
+    }
+    .chat-message-animate {
+        opacity: 0;
+        transform: translateY(10px);
+        animation: chatMessageEnter 0.22s ease-out forwards;
+    }
+    @keyframes chatMessageEnter {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .payload-select-button,
+    .payload-select-button span,
+    .payload-select-label {
+        color: #0f172a !important;
+    }
+    .payload-select-button:hover,
+    .payload-select-button:focus,
+    .payload-select-button:active,
+    .payload-select-button:focus-visible {
+        color: #0f172a !important;
+        background-color: #ffffff !important;
+        border-color: #cbd5e1 !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    .payload-select-button:focus-visible,
+    .payload-select-button:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+    .payload-option {
+        color: #0f172a !important;
+        background-color: #ffffff !important;
+    }
+    .payload-option:hover {
+        background-color: #f8fafc !important;
+    }
+    .chat-input-textarea {
+        color: #0f172a !important;
+        background-color: #ffffff !important;
+        line-height: 1.55;
+        min-height: 52px;
+        max-height: 160px;
+        overflow-y: auto;
+        padding: 0.85rem 1rem;
+        box-sizing: border-box;
+        resize: none;
+    }
+    .chat-input-textarea::placeholder {
+        color: #64748b !important;
+        opacity: 1 !important;
+    }
+    [data-theme="dark"] .chat-input-textarea,
+    .theme-dark .chat-input-textarea {
+        color: #e2e8f0 !important;
+        background-color: #111827 !important;
+    }
+    [data-theme="dark"] .chat-input-textarea::placeholder,
+    .theme-dark .chat-input-textarea::placeholder {
+        color: #94a3b8 !important;
+        opacity: 1 !important;
+    }
+</style>
 {% endblock %}

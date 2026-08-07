@@ -16,9 +16,41 @@
         </div>
         <div>
             <label class="block text-sm font-semibold mb-1 text-slate-700">Password</label>
-            <input type="password" name="password" required class="input-field" placeholder="Create a strong password">
+            <div class="relative">
+                <input id="registerPassword" type="password" name="password" required class="input-field pr-12" placeholder="Create a strong password">
+                <button id="passwordToggle" type="button" aria-label="Show password" title="Show password" class="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-700 focus:outline-none">
+                    <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+                        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <svg id="eyeSlashIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 hidden">
+                        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a20.83 20.83 0 0 1 5.06-6.94" />
+                        <path d="M1 1l22 22" />
+                        <path d="M9.88 9.88a3 3 0 0 0 4.24 4.24" />
+                        <path d="M14.12 14.12A3 3 0 0 1 9.88 9.88" />
+                    </svg>
+                </button>
+            </div>
         </div>
         <button type="submit" class="btn-primary mt-2">Create Profile</button>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var passwordInput = document.getElementById('registerPassword');
+                var toggleButton = document.getElementById('passwordToggle');
+                var eyeIcon = document.getElementById('eyeIcon');
+                var eyeSlashIcon = document.getElementById('eyeSlashIcon');
+                if (!passwordInput || !toggleButton) return;
+
+                toggleButton.addEventListener('click', function() {
+                    var isHidden = passwordInput.getAttribute('type') === 'password';
+                    passwordInput.setAttribute('type', isHidden ? 'text' : 'password');
+                    toggleButton.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+                    toggleButton.setAttribute('title', isHidden ? 'Hide password' : 'Show password');
+                    eyeIcon.classList.toggle('hidden');
+                    eyeSlashIcon.classList.toggle('hidden');
+                });
+            });
+        </script>
     </form>
 </div>
 {% endblock %}

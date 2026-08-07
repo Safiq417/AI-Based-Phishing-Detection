@@ -14,3 +14,20 @@ An intelligent cyber defense application that utilizes specialized machine learn
 ```bash
 python -m venv venv
 source venv/bin/activate  # Windows Environments: .\venv\Scripts\activate
+```
+
+### 2. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Configure OpenAI
+```bash
+# Windows CMD
+set OPENAI_API_KEY=your_openai_api_key_here
+
+# PowerShell
+$env:OPENAI_API_KEY = 'your_openai_api_key_here'
+```
+
+If your Python environment is externally managed, create and activate a local virtual environment before installing dependencies.
