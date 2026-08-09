@@ -392,8 +392,8 @@ def dashboard():
                     reasons.append("Text content includes suspicious keywords")
                 else:
                     reasons.append("No strong phishing keywords detected in text")
-                    ai_analysis = analyze_text_with_ai(content)
-            if ai_analysis and ai_analysis.get('verdict'):
+                ai_analysis = analyze_text_with_ai(content)
+                if ai_analysis and ai_analysis.get('verdict'):
                     verdict = ai_analysis['verdict']
                     reason = ai_analysis.get('reason', '')
                     if verdict == 'PHISHING':
