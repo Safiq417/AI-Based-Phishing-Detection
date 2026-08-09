@@ -671,7 +671,8 @@ def ai_chat():
         assistant_text = assistant_text or 'No response received from the AI model.'
         return jsonify({'reply': assistant_text, 'history': history + [{'role': 'user', 'content': user_message}, {'role': 'assistant', 'content': assistant_text}]})
     except Exception as e:
-        return jsonify({'error': 'AI service unavailable. ' + str(e)}), 500
+        print(f"AI Analysis Error: {e}")
+        return None
 
 if __name__ == '__main__':
     # Fallback initialization check
