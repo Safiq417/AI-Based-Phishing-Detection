@@ -518,7 +518,7 @@ def ai_chat():
     prompt_text = "\n".join(prompt_lines)
 
     GROQ_API_URL = os.environ.get('GROQ_API_URL', 'https://api.groq.com/openai/v1/chat/completions')
-    model_name = os.environ.get('GROQ_MODEL', 'llama3-8b-8192')
+    model_name = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-20b')
     headers = {
         'Authorization': f'Bearer {api_key}',
         'Content-Type': 'application/json',
