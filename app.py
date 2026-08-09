@@ -164,7 +164,20 @@ def analyze_url_lexical(url):
         report["score_deduction"] += 10
 
     # Suspicious or obfuscated URL content
-    suspicious_keywords = ['verify', 'bank', 'secure', 'login', 'update', 'account', 'paypal', 'giftcard', 'free', 'wp-admin', 'reset', 'billing', 'confirm', 'signin']
+    suspicious_keywords = [
+    # Financial & brand impersonation
+    'verify', 'bank', 'secure', 'login', 'paypal', 'amazon', 'netflix',
+    'apple', 'microsoft', 'google', 'hdfc', 'sbi', 'icici', 'upi',
+    # Action words
+    'click here', 'verify now', 'confirm account', 'update billing',
+    'update payment', 'reset password', 'signin', 'wp-admin',
+    # Urgency & threat words
+    'urgent', 'immediately', 'suspend', 'expire', 'limited time',
+    'your account will be closed', 'unusual activity', 'unauthorized',
+    'act now', 'within 24 hours', 'permanently closed',
+    # General
+    'giftcard', 'free', 'billing', 'account', 'winner', 'prize',
+    'congratulations', 'otp', 'kyc', 'aadhar', 'pan card']
     if any(keyword in normalized for keyword in suspicious_keywords):
         report["score_deduction"] += 10
 
@@ -189,6 +202,49 @@ def scan_url_virustotal(url):
         if resp.status_code == 200:
             stats = resp.json()['data']['attributes']['last_analysis_stats']
             return stats
+        return None
+    except Exception:
+        return None
+def analyze_text_with_ai(content):
+    if requests is None:
+        return None
+    api_key = os.environ.get('GROQ_API_KEY') or os.environ.get('GROK_API_KEY')
+    if not api_key:
+        return None
+    try:
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+        prompt = (
+            "You are a cybersecurity expert. Analyze the following email or SMS text "
+            "and determine if it is a phishing attempt. Look for subtle signs like: "
+            "urgency, impersonation, suspicious requests, social engineering, fake rewards, "
+            "fear tactics, unusual sender context, or requests for sensitive information. "
+            "Reply in this exact format only:\n"
+            "VERDICT: [PHISHING or SAFE or SUSPICIOUS]\n"
+            "REASON: [one sentence explanation]\n\n"
+            f"Text to analyze:\n{content[:1000]}"
+        )
+        payload = {
+            'model': 'openai/gpt-oss-20b',
+            'messages': [{'role': 'user', 'content': prompt}],
+            'temperature': 0.2,
+            'max_tokens': 100
+        }
+        resp = requests.post(
+            'https://api.groq.com/openai/v1/chat/completions',
+            headers=headers, json=payload, timeout=10
+        )
+        if resp.status_code == 200:
+            reply = resp.json()['choices'][0]['message']['content'].strip()
+            verdict, reason = '', ''
+            for line in reply.splitlines():
+                if line.startswith('VERDICT:'):
+                    verdict = line.replace('VERDICT:', '').strip()
+                elif line.startswith('REASON:'):
+                    reason = line.replace('REASON:', '').strip()
+            return {'verdict': verdict, 'reason': reason}
         return None
     except Exception:
         return None
@@ -320,13 +376,34 @@ def dashboard():
         else:
             base_score = 0.0
             if input_type == 'text':
-                suspicious_keywords = ['verify', 'bank', 'secure', 'login', 'wp-admin', 'paypal', 'giftcard', 'free', 'update', 'billing', 'account']
+                suspicious_keywords = [
+                    'verify', 'bank', 'secure', 'login', 'paypal', 'amazon', 'netflix',
+                    'apple', 'microsoft', 'google', 'hdfc', 'sbi', 'icici', 'upi',
+                    'click here', 'verify now', 'confirm account', 'update billing',
+                    'reset password', 'signin', 'wp-admin', 'urgent', 'immediately',
+                    'suspend', 'expire', 'limited time', 'unusual activity', 'unauthorized',
+                    'act now', 'within 24 hours', 'permanently closed', 'giftcard',
+                    'free', 'billing', 'account', 'winner', 'prize', 'congratulations',
+                    'otp', 'kyc', 'aadhar', 'pan card', 'update', 'password'
+                ]
                 match_count = sum(1 for word in suspicious_keywords if word in content.lower())
                 base_score = min(match_count * 15.0, 100.0)
                 if match_count:
                     reasons.append("Text content includes suspicious keywords")
                 else:
                     reasons.append("No strong phishing keywords detected in text")
+                    ai_analysis = analyze_text_with_ai(content)
+                if ai_analysis and ai_analysis.get('verdict'):
+                    verdict = ai_analysis['verdict']
+                    reason = ai_analysis.get('reason', '')
+                    if verdict == 'PHISHING':
+                        base_score = min(base_score + 40, 100.0)
+                        reasons.append(f"AI Analysis: Phishing detected — {reason}")
+                    elif verdict == 'SUSPICIOUS':
+                        base_score = min(base_score + 20, 100.0)
+                        reasons.append(f"AI Analysis: Suspicious content — {reason}")
+                    else:
+                        reasons.append(f"AI Analysis: Content appears safe — {reason}")
 
         if input_type == 'url':
             url_features = analyze_url_lexical(content)
