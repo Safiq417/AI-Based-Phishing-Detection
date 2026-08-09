@@ -31,18 +31,6 @@ os.makedirs('model', exist_ok=True)
 model = None
 vectorizer = None
 
-def get_db():
-    """Central DB connection helper.
-    timeout=15 -> if DB is briefly locked by another request, SQLite will
-    wait/retry for up to 15s instead of raising 'database is locked' immediately.
-    WAL mode -> allows concurrent readers + a writer, much more resilient
-    under multiple Gunicorn workers/threads than the default journal mode.
-    """
-    conn = sqlite3.connect(DB_PATH, timeout=15)
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA busy_timeout=15000;")
-    return conn
-
 def load_ml_components():
     global model, vectorizer
     try:
@@ -56,7 +44,7 @@ def load_ml_components():
 
 # Database Initialization
 def init_db():
-    conn = get_db()
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -197,19 +185,11 @@ def calculate_risk_level(score):
 
 # --- System Audit Logger ---
 def log_activity(user_id, action):
-    """Logs an action. Never lets a DB hiccup (e.g. transient lock) break
-    the calling route - logging is best-effort, not critical-path."""
-    conn = None
-    try:
-        conn = get_db()
-        c = conn.cursor()
-        c.execute("INSERT INTO logs (user_id, action) VALUES (?, ?)", (user_id, action))
-        conn.commit()
-    except sqlite3.OperationalError:
-        pass
-    finally:
-        if conn:
-            conn.close()
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("INSERT INTO logs (user_id, action) VALUES (?, ?)", (user_id, action))
+    conn.commit()
+    conn.close()
 
 # --- Core Web Routes ---
 @app.route('/')
@@ -229,24 +209,18 @@ def register():
             
         hashed_password = generate_password_hash(password)
         
-        conn = None
         try:
-            conn = get_db()
+            conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()
             c.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", 
                       (username, email, hashed_password))
             conn.commit()
+            conn.close()
             flash("Registration successful. Please login.", "success")
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
             flash("Username or Email address profile identity collision detected.", "danger")
             return redirect(url_for('register'))
-        except sqlite3.OperationalError:
-            flash("Server is busy right now, please try registering again in a moment.", "danger")
-            return redirect(url_for('register'))
-        finally:
-            if conn:
-                conn.close()
             
     return render_template('register.html')
 
@@ -256,7 +230,7 @@ def login():
         username = request.form['username'].strip()
         password = request.form['password']
         
-        conn = get_db()
+        conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute("SELECT * FROM users WHERE username = ?", (username,))
         user = c.fetchone()
@@ -277,10 +251,7 @@ def login():
 @app.route('/logout')
 def logout():
     if 'user_id' in session:
-        try:
-            log_activity(session['user_id'], "User signed out of system session.")
-        except Exception:
-            pass  # logging failure should never block logout
+        log_activity(session['user_id'], "User signed out of system session.")
     session.clear()
     return redirect(url_for('login'))
 
@@ -289,7 +260,7 @@ def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
-    conn = get_db()
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     
 # Form Inference Processing
@@ -300,8 +271,23 @@ def dashboard():
         base_score = 0.0
         reasons = []
 
+        if not content:
+            flash("Please enter some content to analyze.", "danger")
+            conn.close()
+            return redirect(url_for('dashboard'))
+
         if input_type == 'url' and not is_valid_url(content):
             flash("Invalid URL format. Please submit a full URL beginning with http:// or https://", "danger")
+            conn.close()
+            return redirect(url_for('dashboard'))
+
+        if input_type == 'text' and is_valid_url(content):
+            flash("You entered a URL but selected Email / SMS Content. Please switch Payload Type to Web URL.", "danger")
+            conn.close()
+            return redirect(url_for('dashboard'))
+
+        if input_type == 'url' and not is_valid_url(content) is False and len(content) > 0 and not content.startswith(('http://', 'https://')):
+            flash("Web URL must start with http:// or https://. For email/text content, select Email / SMS Content.", "danger")
             conn.close()
             return redirect(url_for('dashboard'))
 
@@ -382,7 +368,7 @@ def export_report(history_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
-    conn = get_db()
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("SELECT * FROM history WHERE id = ?", (history_id,))
     record = c.fetchone()
@@ -432,7 +418,7 @@ def admin_panel():
     if 'role' not in session or session['role'] != 'admin':
         return "Access Violation. Privileged personnel authorization vector required.", 403
         
-    conn = get_db()
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     
     c.execute("SELECT id, username, email, role FROM users")
@@ -452,7 +438,7 @@ def admin_panel():
 def delete_user(user_id):
     if 'role' not in session or session['role'] != 'admin':
         return "Access Denial Matrix Activated.", 403
-    conn = get_db()
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("DELETE FROM users WHERE id = ? AND role != 'admin'", (user_id,))
     conn.commit()
@@ -464,7 +450,7 @@ def delete_history(id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
-    conn = get_db()
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     # Ensure the user only deletes their own data!
     c.execute("DELETE FROM history WHERE id = ? AND user_id = ?", (id, session['user_id']))
@@ -496,14 +482,8 @@ def ai_chat():
     if not isinstance(history, list):
         history = []
 
-# Developer identity aur user context
-    developer_name = "Safiq Ansari and Team"
-    current_user = session.get('username', 'User')
-
     system_prompt = (
-        f"You are PhishShield AI, a cybersecurity assistant created and developed by {developer_name} for this AI-based Phishing Detection System. "
-        f"You are currently talking to {current_user}. "
-        f"When asked 'who built you', 'who created you', or 'who made you', always answer clearly that you were built and created by {developer_name} for the PhishShield AI project. "
+        "You are PhishShield AI, a cybersecurity assistant for a phishing detection application. "
         "Answer clearly for beginners, explain phishing, malicious URLs, malware, ransomware, passwords, MFA, social engineering, network security, SOC, and related security topics. "
         "If the user asks about the current URL analysis, use the provided analysis details from context to explain risk results and suspicious indicators. "
         "Do not mention any internal errors or API keys. Keep responses helpful and concise. "
@@ -537,8 +517,8 @@ def ai_chat():
     prompt_lines.append(f"User: {user_message}")
     prompt_text = "\n".join(prompt_lines)
 
-    GROQ_API_URL = os.environ.get('GROQ_API_URL', 'https://api.groq.com/openai/v1/responses')
-    model_name = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-20b')
+    GROQ_API_URL = os.environ.get('GROQ_API_URL', 'https://api.groq.com/openai/v1/chat/completions')
+    model_name = os.environ.get('GROQ_MODEL', 'llama3-8b-8192')
     headers = {
         'Authorization': f'Bearer {api_key}',
         'Content-Type': 'application/json',
@@ -546,9 +526,9 @@ def ai_chat():
     }
     payload = {
         'model': model_name,
-        'input': prompt_text,
+        'messages': [{'role': 'user', 'content': prompt_text}],
         'temperature': 0.6,
-        'max_output_tokens': 400,
+        'max_tokens': 1024,
     }
 
     def try_send_with_retries(url, headers, payload, max_retries=3):
@@ -579,15 +559,14 @@ def ai_chat():
 
     try:
         response_json = try_send_with_retries(GROQ_API_URL, headers, payload, max_retries=4)
-        assistant_text = response_json.get('output_text', '')
+        # Groq chat completions format: choices[0].message.content
+        assistant_text = ''
+        choices = response_json.get('choices', [])
+        if choices:
+            assistant_text = choices[0].get('message', {}).get('content', '').strip()
+        # fallback for any other response shape
         if not assistant_text:
-            output_blocks = response_json.get('output', []) or []
-            texts = []
-            for block in output_blocks:
-                for content in block.get('content', []):
-                    if content.get('type') in ('output_text', 'text') and content.get('text'):
-                        texts.append(content['text'])
-            assistant_text = '\n'.join(texts).strip()
+            assistant_text = response_json.get('output_text', '').strip()
 
         # Remove common markdown artifacts so the response stays plain text.
         assistant_text = assistant_text.replace('**', '').replace('__', '')

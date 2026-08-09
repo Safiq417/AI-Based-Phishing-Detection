@@ -45,6 +45,25 @@
             </div>
             <button type="submit" class="btn-primary">Analyze Threat</button>
         </form>
+
+        <!-- Validation Error Modal -->
+        <div id="validationModal" style="display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px);">
+            <div style="background:var(--card,#fff); border-radius:1.25rem; padding:2rem; max-width:380px; width:90%; box-shadow:0 25px 50px rgba(0,0,0,0.25); text-align:center;">
+                <div style="width:56px;height:56px;border-radius:50%;background:#fef2f2;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </div>
+                <h3 id="modalTitle" style="font-size:1.1rem;font-weight:700;color:var(--text,#0f172a);margin-bottom:0.5rem;"></h3>
+                <p id="modalMessage" style="font-size:0.9rem;color:#64748b;margin-bottom:1.5rem;line-height:1.6;"></p>
+                <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+                    <button id="modalSwitchBtn" onclick="switchPayloadAndClose()" style="background:#3b82f6;color:#fff;border:none;border-radius:0.75rem;padding:0.6rem 1.25rem;font-size:0.875rem;font-weight:600;cursor:pointer;display:none;">Switch Payload Type</button>
+                    <button onclick="closeValidationModal()" style="background:#f1f5f9;color:#374151;border:none;border-radius:0.75rem;padding:0.6rem 1.25rem;font-size:0.875rem;font-weight:600;cursor:pointer;">OK, Got it</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="lg:col-span-2 card p-0 overflow-hidden">
@@ -184,17 +203,83 @@
             cutout: '70%'
         }
     });
-    function validatePayload() {
-        const payloadType = document.querySelector('select[name="type"]').value;
-        const contentInput = document.querySelector('textarea[name="content"]').value.trim().toLowerCase();
+    let switchTarget = null; // stores what type to switch to on modal button click
 
-        if (payloadType === 'url') {
-            // Agar sirf HTTPS likha hoga, to ye aage badhne se rok dega
-            if (!contentInput.startsWith('http://') && !contentInput.startsWith('https://')) {
-                alert('Invalid Input: Please enter a full URL starting with http:// or https://');
-                return false; // Form submit nahi hoga
-            }
+    function showValidationModal(title, message, switchTo) {
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalMessage').textContent = message;
+        const switchBtn = document.getElementById('modalSwitchBtn');
+        if (switchTo) {
+            switchTarget = switchTo;
+            switchBtn.style.display = 'inline-block';
+            switchBtn.textContent = 'Switch to ' + (switchTo === 'url' ? 'Web URL' : 'Email / SMS Content');
+        } else {
+            switchTarget = null;
+            switchBtn.style.display = 'none';
         }
+        const modal = document.getElementById('validationModal');
+        modal.style.display = 'flex';
+    }
+
+    function closeValidationModal() {
+        document.getElementById('validationModal').style.display = 'none';
+    }
+
+    function switchPayloadAndClose() {
+        if (!switchTarget) return;
+        const select = document.getElementById('payloadTypeSelect');
+        const label = document.getElementById('payloadTypeLabel');
+        const options = document.querySelectorAll('.payload-option');
+        select.value = switchTarget;
+        options.forEach(opt => {
+            if (opt.getAttribute('data-value') === switchTarget) {
+                label.textContent = opt.getAttribute('data-label');
+                opt.setAttribute('aria-selected', 'true');
+            } else {
+                opt.setAttribute('aria-selected', 'false');
+            }
+        });
+        closeValidationModal();
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('validationModal').addEventListener('click', function(e) {
+        if (e.target === this) closeValidationModal();
+    });
+
+    function isLikelyURL(text) {
+        return /^https?:\/\//i.test(text) || /^www\./i.test(text) || /^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/|$)/i.test(text.split(' ')[0]);
+    }
+
+    function validatePayload() {
+        const payloadType = document.getElementById('payloadTypeSelect').value;
+        const contentInput = document.querySelector('textarea[name="content"]').value.trim();
+
+        if (!contentInput) {
+            showValidationModal('Empty Input', 'Please enter some content to analyze before submitting.', null);
+            return false;
+        }
+
+        // Case 1: Email/SMS selected but URL entered
+        if (payloadType === 'text' && isLikelyURL(contentInput)) {
+            showValidationModal(
+                'Wrong Payload Type Selected',
+                'You entered a URL but "Email / SMS Content" is selected. Please switch to "Web URL" to analyze a link.',
+                'url'
+            );
+            return false;
+        }
+
+        // Case 2: Web URL selected but non-URL text entered
+        if (payloadType === 'url' && !contentInput.match(/^https?:\/\//i)) {
+            showValidationModal(
+                'Invalid URL Format',
+                'You selected "Web URL" but the input does not look like a URL. URLs must start with http:// or https://. For email or SMS text, switch to "Email / SMS Content".',
+                'text'
+            );
+            return false;
+        }
+
         return true;
     }
 
