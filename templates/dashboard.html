@@ -112,7 +112,7 @@
         </div>
         <div class="border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
             <div class="flex items-center gap-2">
-                <textarea id="chatInput" rows="1" placeholder="Ask about phishing, URL analysis, or security best practices..." class="input-field chat-input-textarea min-h-[44px] max-h-[160px] w-full min-w-0 flex-1 resize-none rounded-2xl px-4 text-sm leading-[1.45] placeholder-slate-500 text-slate-900 dark:placeholder-slate-400 dark:bg-slate-900 dark:text-slate-100 box-border overflow-y-hidden" aria-label="Chat message"></textarea>
+                <textarea id="chatInput" rows="1" placeholder="Ask about phishing, URL analysis, or security..." class="input-field chat-input-textarea min-h-[44px] max-h-[160px] w-full min-w-0 flex-1 resize-none rounded-2xl px-4 text-sm leading-[1.45] placeholder-slate-500 text-slate-900 dark:placeholder-slate-400 dark:bg-slate-900 dark:text-slate-100 box-border overflow-y-hidden" aria-label="Chat message"></textarea>
                 <button id="chatSendBtn" type="button" class="chat-send-button inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-blue-500 dark:hover:bg-blue-400" aria-label="Send message">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -543,15 +543,15 @@
             transform: translateY(0);
         }
     }
-    .payload-select-button,
-    .payload-select-button span,
-    .payload-select-label {
+    html:not(.theme-dark) .payload-select-button,
+    html:not(.theme-dark) .payload-select-button span,
+    html:not(.theme-dark) .payload-select-label {
         color: #0f172a !important;
     }
-    .payload-select-button:hover,
-    .payload-select-button:focus,
-    .payload-select-button:active,
-    .payload-select-button:focus-visible {
+    html:not(.theme-dark) .payload-select-button:hover,
+    html:not(.theme-dark) .payload-select-button:focus,
+    html:not(.theme-dark) .payload-select-button:active,
+    html:not(.theme-dark) .payload-select-button:focus-visible {
         color: #0f172a !important;
         background-color: #ffffff !important;
         border-color: #cbd5e1 !important;
@@ -563,12 +563,33 @@
         border-color: #3b82f6 !important;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
     }
-    .payload-option {
+    html:not(.theme-dark) .payload-option {
         color: #0f172a !important;
         background-color: #ffffff !important;
     }
-    .payload-option:hover {
+    html:not(.theme-dark) .payload-option:hover {
         background-color: #f8fafc !important;
+    }
+    /* Dark mode - comprehensive override AFTER all light mode rules */
+    html.theme-dark #payloadTypeList {
+        background-color: #111827 !important;
+        border-color: #334155 !important;
+    }
+    html.theme-dark .payload-select-button,
+    html.theme-dark .payload-select-button span,
+    html.theme-dark .payload-select-label {
+        color: #f8fafc !important;
+        background-color: #111827 !important;
+        border-color: #475569 !important;
+    }
+    html.theme-dark .payload-option {
+        color: #f8fafc !important;
+        background-color: #111827 !important;
+    }
+    html.theme-dark .payload-option:hover,
+    html.theme-dark .payload-option:focus {
+        background-color: #1e3a5f !important;
+        color: #f8fafc !important;
     }
     .chat-input-textarea {
         color: #0f172a !important;
