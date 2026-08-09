@@ -164,20 +164,7 @@ def analyze_url_lexical(url):
         report["score_deduction"] += 10
 
     # Suspicious or obfuscated URL content
-    suspicious_keywords = [
-    # Financial & brand impersonation
-    'verify', 'bank', 'secure', 'login', 'paypal', 'amazon', 'netflix',
-    'apple', 'microsoft', 'google', 'hdfc', 'sbi', 'icici', 'upi',
-    # Action words
-    'click here', 'verify now', 'confirm account', 'update billing',
-    'update payment', 'reset password', 'signin', 'wp-admin',
-    # Urgency & threat words
-    'urgent', 'immediately', 'suspend', 'expire', 'limited time',
-    'your account will be closed', 'unusual activity', 'unauthorized',
-    'act now', 'within 24 hours', 'permanently closed',
-    # General
-    'giftcard', 'free', 'billing', 'account', 'winner', 'prize',
-    'congratulations', 'otp', 'kyc', 'aadhar', 'pan card']
+    suspicious_keywords = ['verify', 'bank', 'secure', 'login', 'wp-admin', 'paypal', 'giftcard', 'free', 'update', 'billing', 'account']
     if any(keyword in normalized for keyword in suspicious_keywords):
         report["score_deduction"] += 10
 
