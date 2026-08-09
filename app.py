@@ -379,19 +379,19 @@ def dashboard():
                     reasons.append("Text content includes suspicious keywords")
                 else:
                     reasons.append("No strong phishing keywords detected in text")
-                ai_analysis = analyze_text_with_ai(content)
-                if ai_analysis and ai_analysis.get('verdict'):
-                    verdict = ai_analysis['verdict']
-                    reason = ai_analysis.get('reason', '')
-                    if verdict == 'PHISHING':
-                        base_score = min(base_score + 40, 100.0)
-                        reasons.append(f"AI Analysis: Phishing detected — {reason}")
-                    elif verdict == 'SUSPICIOUS':
-                        base_score = min(base_score + 20, 100.0)
-                        reasons.append(f"AI Analysis: Suspicious content — {reason}")
-                    else:
-                        reasons.append(f"AI Analysis: Content appears safe — {reason}")
-
+        if input_type == 'text':
+            ai_analysis = analyze_text_with_ai(content)
+            if ai_analysis and ai_analysis.get('verdict'):
+                verdict = ai_analysis['verdict']
+                reason = ai_analysis.get('reason', '')
+                if verdict == 'PHISHING':
+                    base_score = min(base_score + 40, 100.0)
+                    reasons.append(f"AI Analysis: Phishing detected — {reason}")
+                elif verdict == 'SUSPICIOUS':
+                    base_score = min(base_score + 20, 100.0)
+                    reasons.append(f"AI Analysis: Suspicious content — {reason}")
+                else:
+                    reasons.append(f"AI Analysis: Content appears safe — {reason}")
         if input_type == 'url':
             url_features = analyze_url_lexical(content)
             heuristic_score = url_features["score_deduction"]
