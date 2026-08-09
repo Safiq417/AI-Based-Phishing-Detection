@@ -6,6 +6,7 @@ import numpy as np
 from datetime import datetime
 from urllib.parse import urlparse
 import time
+VIRUSTOTAL_API_KEY = os.environ.get('VIRUSTOTAL_API_KEY')
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
 
 try:
@@ -174,8 +175,23 @@ def analyze_url_lexical(url):
         report["score_deduction"] += 10
 
     return report
-
-
+def scan_url_virustotal(url):
+    if not VIRUSTOTAL_API_KEY or requests is None:
+        return None
+    try:
+        import base64
+        headers = {'x-apikey': VIRUSTOTAL_API_KEY}
+        url_id = base64.urlsafe_b64encode(url.encode()).decode().strip('=')
+        resp = requests.get(
+            f'https://www.virustotal.com/api/v3/urls/{url_id}',
+            headers=headers, timeout=10
+        )
+        if resp.status_code == 200:
+            stats = resp.json()['data']['attributes']['last_analysis_stats']
+            return stats
+        return None
+    except Exception:
+        return None
 def calculate_risk_level(score):
     if score < 20: return "Safe"
     elif score < 45: return "Low Risk"
@@ -316,7 +332,18 @@ def dashboard():
             url_features = analyze_url_lexical(content)
             heuristic_score = url_features["score_deduction"]
             base_score = min(base_score + heuristic_score, 100.0)
-
+            vt_result = scan_url_virustotal(content)
+            if vt_result:
+                malicious = vt_result.get('malicious', 0)
+                suspicious = vt_result.get('suspicious', 0)
+                if malicious > 0:
+                    base_score = min(base_score + (malicious * 10), 100.0)
+                    reasons.append(f"VirusTotal: {malicious} engines flagged this URL as malicious")
+                elif suspicious > 0:
+                    base_score = min(base_score + (suspicious * 5), 100.0)
+                    reasons.append(f"VirusTotal: {suspicious} engines flagged as suspicious")
+                else:
+                    reasons.append("VirusTotal: No engines flagged this URL")
             if url_features.get("is_ip"):
                 reasons.append("URL uses a raw IP address")
             if '@' in content:
