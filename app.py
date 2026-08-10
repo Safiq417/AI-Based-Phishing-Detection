@@ -244,8 +244,9 @@ def calculate_risk_level(score):
 
 # --- System Audit Logger ---
 def log_activity(user_id, action):
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10)
     c = conn.cursor()
+    c.execute("PRAGMA journal_mode=WAL;")
     c.execute("INSERT INTO logs (user_id, action) VALUES (?, ?)", (user_id, action))
     conn.commit()
     conn.close()
@@ -461,7 +462,7 @@ def export_report(history_id):
         
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("SELECT * FROM history WHERE id = ?", (history_id,))
+    c.execute("SELECT * FROM history WHERE id = ? AND user_id = ?", (history_id, session['user_id']))
     record = c.fetchone()
     conn.close()
     
