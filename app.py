@@ -380,7 +380,7 @@ def dashboard():
             reasons.append("No strong phishing keywords detected in text")
 
     base_score = min((ml_score * 0.6) + (keyword_score * 0.4), 100.0)
-        if input_type == 'text':
+    if input_type == 'text':
             ai_analysis = analyze_text_with_ai(content)
             if ai_analysis and ai_analysis.get('verdict'):
                 verdict = ai_analysis['verdict']
