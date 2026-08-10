@@ -373,6 +373,28 @@
         chatMessages.appendChild(wrapper);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
+    
+    function typeChatMessage(role, fullText, speed = 15) {
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = role === 'assistant'
+        ? 'chat-message-bubble chat-message-assistant rounded-3xl bg-slate-100 px-4 py-3 text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-100'
+        : 'chat-message-bubble chat-message-user rounded-3xl bg-blue-600 px-4 py-3 text-white shadow-sm';
+    wrapper.classList.add('chat-message-animate');
+    chatMessages.appendChild(wrapper);
+
+    const safeText = fullText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    let i = 0;
+    const interval = setInterval(() => {
+        i++;
+        wrapper.innerHTML = `<p class="whitespace-pre-wrap text-sm m-0">${safeText.slice(0, i)}</p>`;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        if (i >= safeText.length) {
+            clearInterval(interval);
+        }
+    }, speed);
+}
 
     function showTypingIndicator() {
         const chatMessages = document.getElementById('chatMessages');
@@ -447,7 +469,7 @@
                 return;
             }
 
-            appendChatMessage('assistant', result.reply || 'No reply received.');
+            typeChatMessage('assistant', result.reply || 'No reply received.');
             statusLabel.textContent = 'Ready for another question.';
         } catch (error) {
             removeTypingIndicator();
