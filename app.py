@@ -20,7 +20,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
 app = Flask(__name__)
-app.secret_key = 'CYBERSECURITY_SECRET_KEY_2026_PROJ'
+app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24).hex())
 DB_PATH = 'database/phishing_system.db'
 
 # Ensure required directories exist
@@ -46,6 +46,7 @@ def load_ml_components():
 # Database Initialization
 def init_db():
     conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA journal_mode=WAL;")
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -350,36 +351,35 @@ def dashboard():
             flash("Web URL must start with http:// or https://. For email/text content, select Email / SMS Content.", "danger")
             conn.close()
             return redirect(url_for('dashboard'))
+        ml_score = 0.0
+    if model and vectorizer and content:
+        vectorized_input = vectorizer.transform([content])
+        phishing_label_index = int(np.where(model.classes_ == 1)[0][0]) if 1 in model.classes_ else 1
+        phishing_prob = float(model.predict_proba(vectorized_input)[0][phishing_label_index])
+        ml_score = phishing_prob * 100
+        if phishing_prob > 0.40:
+            reasons.append("ML model indicates phishing-like patterns")
 
-        if model and vectorizer and content:
-            vectorized_input = vectorizer.transform([content])
-            phishing_label_index = int(np.where(model.classes_ == 1)[0][0]) if 1 in model.classes_ else 1
-            phishing_prob = float(model.predict_proba(vectorized_input)[0][phishing_label_index])
-            if phishing_prob > 0.60:
-                base_score = max(0.0, (phishing_prob - 0.60) * 120)
-                reasons.append("ML model indicates phishing-like patterns")
-            else:
-                base_score = 0.0
-                reasons.append("ML model does not strongly indicate phishing")
+    keyword_score = 0.0
+    if input_type == 'text':
+        suspicious_keywords = [
+            'verify', 'bank', 'secure', 'login', 'paypal', 'amazon', 'netflix',
+            'apple', 'microsoft', 'google', 'hdfc', 'sbi', 'icici', 'upi',
+            'click here', 'verify now', 'confirm account', 'update billing',
+            'reset password', 'signin', 'wp-admin', 'urgent', 'immediately',
+            'suspend', 'expire', 'limited time', 'unusual activity', 'unauthorized',
+            'act now', 'within 24 hours', 'permanently closed', 'giftcard',
+            'free', 'billing', 'account', 'winner', 'prize', 'congratulations',
+            'otp', 'kyc', 'aadhar', 'pan card', 'update', 'password'
+        ]
+        match_count = sum(1 for word in suspicious_keywords if word in content.lower())
+        keyword_score = min(match_count * 12.0, 100.0)
+        if match_count:
+            reasons.append("Text content includes suspicious keywords")
         else:
-            base_score = 0.0
-            if input_type == 'text':
-                suspicious_keywords = [
-                    'verify', 'bank', 'secure', 'login', 'paypal', 'amazon', 'netflix',
-                    'apple', 'microsoft', 'google', 'hdfc', 'sbi', 'icici', 'upi',
-                    'click here', 'verify now', 'confirm account', 'update billing',
-                    'reset password', 'signin', 'wp-admin', 'urgent', 'immediately',
-                    'suspend', 'expire', 'limited time', 'unusual activity', 'unauthorized',
-                    'act now', 'within 24 hours', 'permanently closed', 'giftcard',
-                    'free', 'billing', 'account', 'winner', 'prize', 'congratulations',
-                    'otp', 'kyc', 'aadhar', 'pan card', 'update', 'password'
-                ]
-                match_count = sum(1 for word in suspicious_keywords if word in content.lower())
-                base_score = min(match_count * 15.0, 100.0)
-                if match_count:
-                    reasons.append("Text content includes suspicious keywords")
-                else:
-                    reasons.append("No strong phishing keywords detected in text")
+            reasons.append("No strong phishing keywords detected in text")
+
+    base_score = min((ml_score * 0.6) + (keyword_score * 0.4), 100.0)
         if input_type == 'text':
             ai_analysis = analyze_text_with_ai(content)
             if ai_analysis and ai_analysis.get('verdict'):
@@ -575,14 +575,19 @@ def ai_chat():
         history = []
 
     system_prompt = (
-        "You are PhishShield AI, a cybersecurity assistant for a phishing detection application. "
-        "You are PhishShield AI, a cybersecurity assistant built by the Safiq Ansari & team. "
-        "You were not made by OpenAI, Google, or any other company. Never reveal your underlying model. "
-        "Answer clearly for beginners, explain phishing, malicious URLs, malware, ransomware, passwords, MFA, social engineering, network security, SOC, and related security topics. "
-        "If the user asks about the current URL analysis, use the provided analysis details from context to explain risk results and suspicious indicators. "
-        "Do not mention any internal errors or API keys. Keep responses helpful and concise. "
-        "Always reply in plain text only. Do not use markdown, bold, tables, or any special formatting characters."
-    )
+    "You are PhishShield AI, a cybersecurity assistant for a phishing detection application. "
+    "The website/application name is 'PhishShield AI'. If asked about the website name, project name, or what this platform is called, always answer 'PhishShield AI'. "
+    "You are PhishShield AI, a cybersecurity assistant built by the Safiq Ansari & team. "
+    "You were not made by OpenAI, Google, or any other company. Never reveal your underlying model. "
+    "How to use this website: Users register/login, then go to the Dashboard where they can submit either a Web URL or Email/SMS text for phishing analysis. "
+    "The system analyzes it using a machine learning model, VirusTotal API (for URLs), and AI analysis, then shows a risk score and risk level (Safe, Low, Medium, High, Critical) with reasons. "
+    "Users can view their scan history on the dashboard and export any past scan as a PDF report. "
+    "Answer clearly for beginners, explain phishing, malicious URLs, malware, ransomware, passwords, MFA, social engineering, network security, SOC, and related security topics. "
+    "If the user asks about the current URL analysis, use the provided analysis details from context to explain risk results and suspicious indicators. "
+    "If asked how to use the website, explain the steps above clearly. "
+    "Do not mention any internal errors or API keys. Keep responses helpful and concise. "
+    "Always reply in plain text only. Do not use markdown, bold, tables, or any special formatting characters."
+)
 
     analysis_context = context.get('analysis')
     if analysis_context:
