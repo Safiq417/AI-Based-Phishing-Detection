@@ -351,36 +351,37 @@ def dashboard():
             flash("Web URL must start with http:// or https://. For email/text content, select Email / SMS Content.", "danger")
             conn.close()
             return redirect(url_for('dashboard'))
-        ml_score = 0.0
-    if model and vectorizer and content:
-        vectorized_input = vectorizer.transform([content])
-        phishing_label_index = int(np.where(model.classes_ == 1)[0][0]) if 1 in model.classes_ else 1
-        phishing_prob = float(model.predict_proba(vectorized_input)[0][phishing_label_index])
-        ml_score = phishing_prob * 100
-        if phishing_prob > 0.40:
-            reasons.append("ML model indicates phishing-like patterns")
 
-    keyword_score = 0.0
-    if input_type == 'text':
-        suspicious_keywords = [
-            'verify', 'bank', 'secure', 'login', 'paypal', 'amazon', 'netflix',
-            'apple', 'microsoft', 'google', 'hdfc', 'sbi', 'icici', 'upi',
-            'click here', 'verify now', 'confirm account', 'update billing',
-            'reset password', 'signin', 'wp-admin', 'urgent', 'immediately',
-            'suspend', 'expire', 'limited time', 'unusual activity', 'unauthorized',
-            'act now', 'within 24 hours', 'permanently closed', 'giftcard',
-            'free', 'billing', 'account', 'winner', 'prize', 'congratulations',
-            'otp', 'kyc', 'aadhar', 'pan card', 'update', 'password'
-        ]
-        match_count = sum(1 for word in suspicious_keywords if word in content.lower())
-        keyword_score = min(match_count * 12.0, 100.0)
-        if match_count:
-            reasons.append("Text content includes suspicious keywords")
+        if model and vectorizer and content:
+            vectorized_input = vectorizer.transform([content])
+            phishing_label_index = int(np.where(model.classes_ == 1)[0][0]) if 1 in model.classes_ else 1
+            phishing_prob = float(model.predict_proba(vectorized_input)[0][phishing_label_index])
+            if phishing_prob > 0.60:
+                base_score = max(0.0, (phishing_prob - 0.60) * 120)
+                reasons.append("ML model indicates phishing-like patterns")
+            else:
+                base_score = 0.0
+                reasons.append("ML model does not strongly indicate phishing")
         else:
-            reasons.append("No strong phishing keywords detected in text")
-
-    base_score = min((ml_score * 0.6) + (keyword_score * 0.4), 100.0)
-    if input_type == 'text':
+            base_score = 0.0
+            if input_type == 'text':
+                suspicious_keywords = [
+                    'verify', 'bank', 'secure', 'login', 'paypal', 'amazon', 'netflix',
+                    'apple', 'microsoft', 'google', 'hdfc', 'sbi', 'icici', 'upi',
+                    'click here', 'verify now', 'confirm account', 'update billing',
+                    'reset password', 'signin', 'wp-admin', 'urgent', 'immediately',
+                    'suspend', 'expire', 'limited time', 'unusual activity', 'unauthorized',
+                    'act now', 'within 24 hours', 'permanently closed', 'giftcard',
+                    'free', 'billing', 'account', 'winner', 'prize', 'congratulations',
+                    'otp', 'kyc', 'aadhar', 'pan card', 'update', 'password'
+                ]
+                match_count = sum(1 for word in suspicious_keywords if word in content.lower())
+                base_score = min(match_count * 15.0, 100.0)
+                if match_count:
+                    reasons.append("Text content includes suspicious keywords")
+                else:
+                    reasons.append("No strong phishing keywords detected in text")
+        if input_type == 'text':
             ai_analysis = analyze_text_with_ai(content)
             if ai_analysis and ai_analysis.get('verdict'):
                 verdict = ai_analysis['verdict']
