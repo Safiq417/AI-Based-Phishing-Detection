@@ -353,7 +353,7 @@ def dashboard():
             return redirect(url_for('dashboard'))
 
         ml_score = 0.0
-        if model and vectorizer and content:
+        if model and vectorizer and content and input_type == 'text':
             vectorized_input = vectorizer.transform([content])
             phishing_label_index = int(np.where(model.classes_ == 1)[0][0]) if 1 in model.classes_ else 1
             phishing_prob = float(model.predict_proba(vectorized_input)[0][phishing_label_index])
@@ -432,8 +432,9 @@ def dashboard():
 
         risk_level = calculate_risk_level(base_score)
 
-        breakdown_parts = [f"ML Model: {ml_score:.1f}%"]
+        breakdown_parts = []
         if input_type == 'text':
+            breakdown_parts.append(f"ML Model: {ml_score:.1f}%")
             breakdown_parts.append(f"Keyword Score: {keyword_score:.1f}%")
         if input_type == 'url' and vt_result:
             vt_malicious = vt_result.get('malicious', 0)
