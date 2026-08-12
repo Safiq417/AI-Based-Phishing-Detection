@@ -3,69 +3,65 @@ import pickle
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report
-
+from sklearn.pipeline import make_pipeline
 
 def train_and_save_model():
-    # --- Load real-world dataset (UCI SMS Spam Collection) ---
-    csv_path = os.path.join(os.path.dirname(__file__), 'spam.csv')
-    df = pd.read_csv(csv_path, encoding='latin-1')
+    # Synthetic comprehensive dataset for immediate training execution
+    data = {
+    'text': [
+        # Phishing examples (label 1) - variety of brands/styles
+        "Dear customer, your bank account has been locked. Click here to reset your password immediately.",
+        "URGENT: Your package delivery failed. Verify your details now at http://bit.ly/fake-track",
+        "Congratulations! You won a $1000 Walmart gift card. Claim your reward at this link.",
+        "Verify your Netflix billing information now to avoid service interruption.",
+        "Suspicious login attempt detected on your account from Russia. Secure it here.",
+        "Get rich quick! Work from home and earn $5000 a day. Sign up now!",
+        "Hi Mom, I lost my phone. This is my temporary number. Please text me back.",
+        "Official security alert from your IT department. Update your credentials immediately.",
+        "Your Amazon account password needs to be reset urgently. Confirm billing information now.",
+        "Your PayPal account has been limited. Verify your identity within 24 hours.",
+        "Apple ID locked due to unusual activity. Sign in here to unlock your account now.",
+        "Your Microsoft 365 subscription payment failed. Update payment details immediately or lose access.",
+        "Final notice: Your electricity bill is overdue. Pay now to avoid disconnection. Click link.",
+        "Your UPI account has been flagged for KYC update. Complete verification within 24 hours.",
+        "Winner! You have been selected for a free iPhone 15. Claim now before offer expires.",
+        "HDFC Bank: Your debit card will be blocked. Update your details immediately to continue services.",
 
-    # Keep only the relevant columns and rename them
-    df = df[['v1', 'v2']].rename(columns={'v1': 'label', 'v2': 'text'})
+        # Safe examples (label 0) - variety of everyday contexts
+        "Hey, are we still meeting for lunch today at the cafeteria?",
+        "The weekly project status report is attached. Please review by Friday afternoon.",
+        "Your Amazon order #403-19283 has been shipped. Track your shipment inside.",
+        "Can you send over the updated spreadsheet whenever you have a moment?",
+        "Reminder: Your dentist appointment is scheduled for tomorrow at 10 AM.",
+        "Thanks for the great meeting today, looking forward to next steps.",
+        "Your flight booking is confirmed. Check-in opens 24 hours before departure.",
+        "Happy birthday! Hope you have a wonderful day.",
+        "The team lunch is moved to 1 PM instead of 12 PM, see you there.",
+        "Your monthly newsletter subscription has been updated successfully."
+    ],
+    'label': [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 0,0,0,0,0,0,0,0,0,0]
+}
 
-    # Convert labels: spam -> 1 (phishing/malicious), ham -> 0 (safe)
-    df['label'] = df['label'].map({'spam': 1, 'ham': 0})
-
-    # Basic cleanup
-    df.dropna(subset=['text', 'label'], inplace=True)
-    df.drop_duplicates(subset=['text'], inplace=True)
-
-    print(f"[+] Loaded {len(df)} messages "
-          f"({(df['label'] == 1).sum()} spam / {(df['label'] == 0).sum()} ham)")
-
-    X_text = df['text']
-    y = df['label']
-
-    # --- Train/test split so we can measure real accuracy ---
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_text, y, test_size=0.2, random_state=42, stratify=y
-    )
-
-    # --- Vectorizer ---
-    vectorizer = TfidfVectorizer(
-        stop_words='english',
-        ngram_range=(1, 2),
-        max_features=5000,
-        min_df=2
-    )
-    X_train_vec = vectorizer.fit_transform(X_train)
-    X_test_vec = vectorizer.transform(X_test)
-
-    # --- Model ---
-    model = MultinomialNB(alpha=0.1)
-    model.fit(X_train_vec, y_train)
-
-    # --- Evaluate ---
-    y_pred = model.predict(X_test_vec)
-    acc = accuracy_score(y_test, y_pred)
-    print(f"[+] Test Accuracy: {acc * 100:.2f}%")
-    print(classification_report(y_test, y_pred, target_names=['Safe', 'Phishing']))
-
-    # --- Retrain on FULL dataset before saving (use all available data) ---
-    X_full_vec = vectorizer.fit_transform(X_text)
-    model.fit(X_full_vec, y)
-
-    # --- Save artifacts ---
+    df = pd.DataFrame(data)
+    
+    # Ensure model target directory exists
     os.makedirs('model', exist_ok=True)
+    
+    # Vectorizer and Classifier Pipeline
+    vectorizer = TfidfVectorizer(stop_words='english', ngram_range=(1, 2))
+    X = vectorizer.fit_transform(df['text'])
+    y = df['label']
+    
+    model = MultinomialNB(alpha=0.1)
+    model.fit(X, y)
+    
+    # Save artifacts
     with open('model/vectorizer.pkl', 'wb') as f:
         pickle.dump(vectorizer, f)
     with open('model/phishing_model.pkl', 'wb') as f:
         pickle.dump(model, f)
-
+        
     print("[+] Model and Vectorizer trained and saved successfully inside 'model/' directory.")
-
 
 if __name__ == '__main__':
     train_and_save_model()

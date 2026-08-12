@@ -431,6 +431,18 @@ def dashboard():
             reasons.append("Overall analysis indicates a low-risk result")
 
         risk_level = calculate_risk_level(base_score)
+
+        breakdown_parts = [f"ML Model: {ml_score:.1f}%"]
+        if input_type == 'text':
+            breakdown_parts.append(f"Keyword Score: {keyword_score:.1f}%")
+        if input_type == 'url' and vt_result:
+            vt_malicious = vt_result.get('malicious', 0)
+            vt_suspicious = vt_result.get('suspicious', 0)
+            breakdown_parts.append(f"VirusTotal: {vt_malicious} malicious / {vt_suspicious} suspicious engines")
+        if input_type == 'text' and ai_analysis and ai_analysis.get('verdict'):
+            breakdown_parts.append(f"AI Verdict: {ai_analysis['verdict']}")
+        breakdown_parts.append(f"Final Combined Score: {base_score:.1f}% ({risk_level})")
+        reasons.insert(0, "SCORE BREAKDOWN — " + " | ".join(breakdown_parts))
         if reasons:
             flash("Analysis reasons: " + "; ".join(reasons), "success")
         c.execute("INSERT INTO history (user_id, input_type, content, score, risk_level) VALUES (?, ?, ?, ?, ?)",
