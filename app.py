@@ -568,12 +568,43 @@ def admin_panel():
 @app.route('/admin/delete_user/<int:user_id>')
 def delete_user(user_id):
     if 'role' not in session or session['role'] != 'admin':
-        return "Access Denial Matrix Activated.", 403
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("DELETE FROM users WHERE id = ? AND role != 'admin'", (user_id,))
-    conn.commit()
-    conn.close()
+        flash("Access Denial: Admin authorization required.", "danger")
+        return redirect(url_for('login'))
+        
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=15)
+        conn.execute("PRAGMA journal_mode=WAL;")
+        c = conn.cursor()
+        
+        # Check if target user exists and is not admin
+        c.execute("SELECT role FROM users WHERE id = ?", (user_id,))
+        target_user = c.fetchone()
+        
+        if not target_user:
+            flash("User not found.", "danger")
+            conn.close()
+            return redirect(url_for('admin_panel'))
+            
+        if target_user[0] == 'admin':
+            flash("Cannot delete an administrator account.", "danger")
+            conn.close()
+            return redirect(url_for('admin_panel'))
+
+        # Clean up related records to avoid foreign key / integrity errors
+        c.execute("DELETE FROM reports WHERE history_id IN (SELECT id FROM history WHERE user_id = ?)", (user_id,))
+        c.execute("DELETE FROM history WHERE user_id = ?", (user_id,))
+        c.execute("DELETE FROM logs WHERE user_id = ?", (user_id,))
+        c.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        log_activity(session['user_id'], f"Deleted user ID {user_id} and associated records.")
+        flash(f"User #{user_id} and associated data successfully removed.", "success")
+    except Exception as e:
+        print(f"Error deleting user {user_id}: {e}")
+        flash("An error occurred while attempting to delete the user.", "danger")
+        
     return redirect(url_for('admin_panel'))
 
 @app.route('/delete/<int:id>')
@@ -717,7 +748,7 @@ def ai_chat():
         return jsonify({'reply': assistant_text, 'history': history + [{'role': 'user', 'content': user_message}, {'role': 'assistant', 'content': assistant_text}]})
     except Exception as e:
         print(f"AI Analysis Error: {e}")
-        return None
+        return jsonify({'error': 'AI service processing error.'}), 500
 
 if __name__ == '__main__':
     # Fallback initialization check
