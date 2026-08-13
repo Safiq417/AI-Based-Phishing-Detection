@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 from datetime import datetime
 from urllib.parse import urlparse
+from difflib import SequenceMatcher
 import time
 VIRUSTOTAL_API_KEY = os.environ.get('VIRUSTOTAL_API_KEY')
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
@@ -176,6 +177,26 @@ def analyze_url_lexical(url):
         report["score_deduction"] += 10
 
     return report
+
+POPULAR_DOMAINS = [
+    'google.com', 'facebook.com', 'amazon.com', 'paypal.com', 'microsoft.com',
+    'apple.com', 'netflix.com', 'instagram.com', 'whatsapp.com', 'youtube.com',
+    'sbi.co.in', 'hdfcbank.com', 'icicibank.com', 'linkedin.com', 'twitter.com'
+]
+
+def check_typosquatting(url):
+    try:
+        domain = (urlparse(url).hostname or '').lower().replace('www.', '')
+    except Exception:
+        return None
+    if not domain or domain in POPULAR_DOMAINS:
+        return None  # empty or exact legitimate match
+    for legit in POPULAR_DOMAINS:
+        ratio = SequenceMatcher(None, domain, legit).ratio()
+        if ratio > 0.75:
+            return legit
+    return None
+
 def scan_url_virustotal(url):
     if not VIRUSTOTAL_API_KEY or requests is None:
         return None
@@ -398,6 +419,10 @@ def dashboard():
             url_features = analyze_url_lexical(content)
             heuristic_score = url_features["score_deduction"]
             base_score = min(base_score + heuristic_score, 100.0)
+            typosquat_match = check_typosquatting(content)
+            if typosquat_match:
+                base_score = min(base_score + 55, 100.0)
+                reasons.append(f"Domain closely resembles '{typosquat_match}' — possible brand impersonation / typosquatting")
             vt_result = scan_url_virustotal(content)
             if vt_result:
                 malicious = vt_result.get('malicious', 0)
