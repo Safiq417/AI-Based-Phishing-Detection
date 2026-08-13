@@ -139,9 +139,9 @@
                     </svg>
                 </button>
             </div>
-            <div class="mt-2 flex items-center justify-between text-[0.72rem] text-slate-500 dark:text-slate-400">
-                <span id="chatStatus">Ask me about the analysis or cybersecurity topics.</span>
-                <button id="chatClearBtn" type="button" class="text-slate-600 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100">Clear</button>
+            <div class="mt-2 flex items-center justify-between gap-2 text-[0.72rem] text-slate-500 dark:text-slate-400">
+                <span id="chatStatus" class="truncate">Ask me about analysis or security topics.</span>
+                <button id="chatClearBtn" type="button" class="shrink-0 font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100">Clear</button>
             </div>
         </div>
     </div>
@@ -529,10 +529,14 @@
             chatClearBtn.addEventListener('click', function() {
                 const chatMessages = document.getElementById('chatMessages');
                 if (chatMessages) {
-                    chatMessages.innerHTML = '';
+                    chatMessages.innerHTML = `
+                        <div class="rounded-3xl bg-slate-100 px-4 py-3 text-slate-700 shadow-sm dark:bg-slate-800 dark:text-slate-200">
+                            <p class="whitespace-pre-wrap text-sm">Ask me about your latest URL analysis, phishing risk, or cybersecurity best practices.</p>
+                        </div>
+                    `;
                 }
                 if (statusLabel) {
-                    statusLabel.textContent = 'Ask me about the analysis or cybersecurity topics.';
+                    statusLabel.textContent = 'Chat cleared.';
                 }
                 if (chatInput) {
                     chatInput.value = '';
