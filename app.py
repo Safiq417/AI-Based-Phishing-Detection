@@ -192,22 +192,31 @@ POPULAR_DOMAINS = [
 
 def check_typosquatting(url):
     try:
-        domain = (urlparse(url).hostname or '').lower().replace('www.', '')
+        hostname = (urlparse(url).hostname or '').lower().replace('www.', '')
     except Exception:
         return None
-    if not domain:
-        return None  # empty domain
-    # If the domain is exactly a popular domain or a legitimate subdomain of one, it is authentic
+    if not hostname:
+        return None
+
+    # 1. Legitimate domain ya subdomain check
     for legit in POPULAR_DOMAINS:
-        if domain == legit or domain.endswith('.' + legit):
+        if hostname == legit or hostname.endswith('.' + legit):
             return None
+
+    # Main brand name extract karna (e.g., 'kaggle.com' -> 'kaggle')
+    domain_name = hostname.split('.')[0]
+
     for legit in POPULAR_DOMAINS:
         legit_name = legit.split('.')[0]
-        ratio = SequenceMatcher(None, domain, legit).ratio()
+
+        # Stripped names ko compare karna (without .com / TLD)
+        ratio = SequenceMatcher(None, domain_name, legit_name).ratio()
+
         if ratio > 0.75:
             return legit
-        if len(legit_name) >= 4 and legit_name in domain:
+        if len(legit_name) >= 4 and legit_name in domain_name and domain_name != legit_name:
             return legit
+
     return None
 
 def scan_url_virustotal(url):
