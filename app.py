@@ -248,7 +248,7 @@ def analyze_text_with_ai(content):
             "REASON: [one sentence explanation]\n\n"
             f"Text to analyze:\n{content[:1000]}"
         )
-        model_name = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
+        model_name = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b')
         payload = {
             'model': model_name,
             'messages': [{'role': 'user', 'content': prompt}],
@@ -703,7 +703,7 @@ def ai_chat():
     messages.append({'role': 'user', 'content': user_message})
 
     GROQ_API_URL = os.environ.get('GROQ_API_URL', 'https://api.groq.com/openai/v1/chat/completions')
-    model_name = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
+    model_name = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b')
     headers = {
         'Authorization': f'Bearer {api_key.strip()}',
         'Content-Type': 'application/json',
