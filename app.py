@@ -526,7 +526,12 @@ def export_report(history_id):
     conn.commit()
     conn.close()
 
-    doc = SimpleDocTemplate(pdf_filename, pagesize=letter)
+    doc = SimpleDocTemplate(
+        pdf_filename, 
+        pagesize=letter,
+        title=f"PhishShield Security Report #{history_id}",
+        author="PhishShield AI Enterprise"
+    )
     styles = getSampleStyleSheet()
     story = []
     
