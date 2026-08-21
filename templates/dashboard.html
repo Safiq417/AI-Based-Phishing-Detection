@@ -431,6 +431,8 @@
         input.style.overflowY = 'hidden';
     }
 
+    let chatHistory = [];
+
     async function sendChatMessage() {
         const input = document.getElementById('chatInput');
         const statusLabel = document.getElementById('chatStatus');
@@ -447,7 +449,7 @@
         const typingIndicator = showTypingIndicator();
 
         const contextPayload = {
-            history: [],
+            history: chatHistory.slice(-8),
             analysis: analysisDetails
         };
 
@@ -469,7 +471,9 @@
                 return;
             }
 
-            typeChatMessage('assistant', result.reply || 'No reply received.');
+            const assistantReply = result.reply || 'No reply received.';
+            typeChatMessage('assistant', assistantReply);
+            chatHistory = result.history || [...chatHistory, { role: 'user', content: message }, { role: 'assistant', content: assistantReply }];
             statusLabel.textContent = 'Ready for another question.';
         } catch (error) {
             removeTypingIndicator();
@@ -527,6 +531,7 @@
 
         if (chatClearBtn) {
             chatClearBtn.addEventListener('click', function() {
+                chatHistory = [];
                 const chatMessages = document.getElementById('chatMessages');
                 if (chatMessages) {
                     chatMessages.innerHTML = `

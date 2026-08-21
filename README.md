@@ -21,13 +21,15 @@ source venv/bin/activate  # Windows Environments: .\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. Configure OpenAI
+### 3. Configure API Keys (Optional)
 ```bash
 # Windows CMD
-set OPENAI_API_KEY=your_openai_api_key_here
+set GROQ_API_KEY=your_groq_api_key_here
+set VIRUSTOTAL_API_KEY=your_virustotal_api_key_here
 
 # PowerShell
-$env:OPENAI_API_KEY = 'your_openai_api_key_here'
+$env:GROQ_API_KEY = 'your_groq_api_key_here'
+$env:VIRUSTOTAL_API_KEY = 'your_virustotal_api_key_here'
 ```
 
 If your Python environment is externally managed, create and activate a local virtual environment before installing dependencies.

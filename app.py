@@ -165,8 +165,12 @@ def analyze_url_lexical(url):
         report["no_https"] = 1
         report["score_deduction"] += 10
 
-    # Suspicious or obfuscated URL content
-    suspicious_keywords = ['verify', 'bank', 'secure', 'login', 'wp-admin', 'paypal', 'giftcard', 'free', 'update', 'billing', 'account']
+    # Suspicious or obfuscated URL content (skip brand-name deduction if hosted on that actual legitimate domain)
+    suspicious_keywords = ['verify', 'bank', 'secure', 'login', 'wp-admin', 'giftcard', 'free', 'update', 'billing']
+    is_legit_popular = any(hostname == legit or hostname.endswith('.' + legit) for legit in POPULAR_DOMAINS)
+    if not is_legit_popular:
+        suspicious_keywords.extend(['paypal', 'account', 'amazon', 'netflix', 'apple', 'microsoft', 'google'])
+
     if any(keyword in normalized for keyword in suspicious_keywords):
         report["score_deduction"] += 10
 
@@ -189,11 +193,18 @@ def check_typosquatting(url):
         domain = (urlparse(url).hostname or '').lower().replace('www.', '')
     except Exception:
         return None
-    if not domain or domain in POPULAR_DOMAINS:
-        return None  # empty or exact legitimate match
+    if not domain:
+        return None  # empty domain
+    # If the domain is exactly a popular domain or a legitimate subdomain of one, it is authentic
     for legit in POPULAR_DOMAINS:
+        if domain == legit or domain.endswith('.' + legit):
+            return None
+    for legit in POPULAR_DOMAINS:
+        legit_name = legit.split('.')[0]
         ratio = SequenceMatcher(None, domain, legit).ratio()
         if ratio > 0.75:
+            return legit
+        if len(legit_name) >= 4 and legit_name in domain:
             return legit
     return None
 
@@ -235,8 +246,9 @@ def analyze_text_with_ai(content):
             "REASON: [one sentence explanation]\n\n"
             f"Text to analyze:\n{content[:1000]}"
         )
+        model_name = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
         payload = {
-            'model': 'openai/gpt-oss-20b',
+            'model': model_name,
             'messages': [{'role': 'user', 'content': prompt}],
             'temperature': 0.2,
             'max_tokens': 100
@@ -368,11 +380,6 @@ def dashboard():
             conn.close()
             return redirect(url_for('dashboard'))
 
-        if input_type == 'url' and not is_valid_url(content) is False and len(content) > 0 and not content.startswith(('http://', 'https://')):
-            flash("Web URL must start with http:// or https://. For email/text content, select Email / SMS Content.", "danger")
-            conn.close()
-            return redirect(url_for('dashboard'))
-
         ml_score = 0.0
         if model and vectorizer and content and input_type == 'text':
             vectorized_input = vectorizer.transform([content])
@@ -474,6 +481,7 @@ def dashboard():
         c.execute("INSERT INTO history (user_id, input_type, content, score, risk_level) VALUES (?, ?, ?, ?, ?)",
                   (session['user_id'], input_type, content, base_score, risk_level))
         conn.commit()
+        conn.close()
         log_activity(session['user_id'], f"Processed analysis for {input_type} evaluation engine.")
         return redirect(url_for('dashboard'))
 
@@ -503,13 +511,19 @@ def export_report(history_id):
     c = conn.cursor()
     c.execute("SELECT * FROM history WHERE id = ? AND user_id = ?", (history_id, session['user_id']))
     record = c.fetchone()
-    conn.close()
     
     if not record:
+        conn.close()
         return "Record resolution trace missing.", 404
         
     # Generate Dynamic PDF Content via ReportLab pipeline
     pdf_filename = f"reports/CyberReport_{history_id}.pdf"
+    
+    # Track PDF report in reports table
+    c.execute("INSERT INTO reports (history_id, file_path) VALUES (?, ?)", (history_id, pdf_filename))
+    conn.commit()
+    conn.close()
+
     doc = SimpleDocTemplate(pdf_filename, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
@@ -565,7 +579,7 @@ def admin_panel():
     conn.close()
     return render_template('admin.html', users=all_users, logs=system_logs)
 
-@app.route('/admin/delete_user/<int:user_id>')
+@app.route('/admin/delete_user/<int:user_id>', methods=['GET', 'POST'])
 def delete_user(user_id):
     if 'role' not in session or session['role'] != 'admin':
         flash("Access Denial: Admin authorization required.", "danger")
@@ -607,7 +621,7 @@ def delete_user(user_id):
         
     return redirect(url_for('admin_panel'))
 
-@app.route('/delete/<int:id>')
+@app.route('/delete/<int:id>', methods=['GET', 'POST'])
 def delete_history(id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -687,7 +701,7 @@ def ai_chat():
     prompt_text = "\n".join(prompt_lines)
 
     GROQ_API_URL = os.environ.get('GROQ_API_URL', 'https://api.groq.com/openai/v1/chat/completions')
-    model_name = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-20b')
+    model_name = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
     headers = {
         'Authorization': f'Bearer {api_key}',
         'Content-Type': 'application/json',
