@@ -693,30 +693,25 @@ def ai_chat():
     else:
         analysis_text = ''
 
-    prompt_lines = [system_prompt.strip()]
+    messages = [{'role': 'system', 'content': system_prompt.strip()}]
     if analysis_text:
-        prompt_lines.append(analysis_text.strip())
+        messages.append({'role': 'system', 'content': f"Current context:\n{analysis_text.strip()}"})
     if history:
-        prompt_lines.append("\nConversation history:")
         for item in history:
-            if not item.get('role') or not item.get('content'):
-                continue
-            role = item['role']
-            label = 'User' if role == 'user' else 'Assistant' if role == 'assistant' else role.capitalize()
-            prompt_lines.append(f"{label}: {item['content']}")
-    prompt_lines.append(f"User: {user_message}")
-    prompt_text = "\n".join(prompt_lines)
+            if item.get('role') in ('user', 'assistant') and item.get('content'):
+                messages.append({'role': item['role'], 'content': item['content']})
+    messages.append({'role': 'user', 'content': user_message})
 
     GROQ_API_URL = os.environ.get('GROQ_API_URL', 'https://api.groq.com/openai/v1/chat/completions')
     model_name = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
     headers = {
-        'Authorization': f'Bearer {api_key}',
+        'Authorization': f'Bearer {api_key.strip()}',
         'Content-Type': 'application/json',
         'Accept': 'application/json',
     }
     payload = {
         'model': model_name,
-        'messages': [{'role': 'user', 'content': prompt_text}],
+        'messages': messages,
         'temperature': 0.6,
         'max_tokens': 1024,
     }
@@ -730,15 +725,15 @@ def ai_chat():
                     return response.json()
                 body = response.text
                 if response.status_code in (429, 500, 502, 503, 504):
-                    last_exc = Exception(f'Grok API error {response.status_code}: {body}')
+                    last_exc = Exception(f'Groq API error {response.status_code}: {body}')
                     time.sleep(1 << (attempt - 1))
                     continue
                 try:
                     error_json = response.json()
-                    error_message = error_json.get('error') or error_json.get('message') or body
+                    error_message = error_json.get('error', {}).get('message') or error_json.get('message') or body
                 except ValueError:
                     error_message = body
-                raise Exception(f'Grok API error {response.status_code}: {error_message}')
+                raise Exception(f'Groq API error {response.status_code}: {error_message}')
             except requests.exceptions.RequestException as e:
                 last_exc = e
                 if attempt < max_retries:
@@ -768,8 +763,11 @@ def ai_chat():
         assistant_text = assistant_text or 'No response received from the AI model.'
         return jsonify({'reply': assistant_text, 'history': history + [{'role': 'user', 'content': user_message}, {'role': 'assistant', 'content': assistant_text}]})
     except Exception as e:
-        print(f"AI Analysis Error: {e}")
-        return jsonify({'error': 'AI service processing error.'}), 500
+        err_msg = str(e)
+        print(f"AI Analysis Error: {err_msg}")
+        if '401' in err_msg:
+            return jsonify({'error': 'Invalid Groq API key. Please verify your API key on console.groq.com.'}), 500
+        return jsonify({'error': f'AI service error: {err_msg}'}), 500
 
 if __name__ == '__main__':
     # Fallback initialization check
