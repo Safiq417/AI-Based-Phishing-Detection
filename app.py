@@ -577,28 +577,37 @@ def export_report(history_id):
     styles = getSampleStyleSheet()
     story = []
 
-    # Custom Theme Styles
+    # Custom Dedicated Theme Styles (Ensures zero text collision and perfect leading)
     primary_color = colors.HexColor('#0F172A')
     accent_blue = colors.HexColor('#2563EB')
+    table_head_bg = colors.HexColor('#1E40AF') # Vibrant Cyber Blue Header
     muted_color = colors.HexColor('#64748B')
     border_color = colors.HexColor('#CBD5E1')
 
-    title_style = ParagraphStyle('ReportMainTitle', fontName='Helvetica-Bold', fontSize=15, textColor=primary_color, leading=18)
-    subtitle_style = ParagraphStyle('ReportSubTitle', fontName='Helvetica', fontSize=8.5, textColor=muted_color, leading=11)
-    meta_style = ParagraphStyle('ReportMeta', fontName='Helvetica', fontSize=8, textColor=primary_color, leading=11, alignment=2)
+    title_style = ParagraphStyle('ReportMainTitle', fontName='Helvetica-Bold', fontSize=14, textColor=primary_color, leading=17)
+    subtitle_style = ParagraphStyle('ReportSubTitle', fontName='Helvetica', fontSize=8, textColor=muted_color, leading=10)
+    meta_style = ParagraphStyle('ReportMeta', fontName='Helvetica', fontSize=7.5, textColor=primary_color, leading=10, alignment=2)
     meta_bold = ParagraphStyle('ReportMetaBold', fontName='Helvetica-Bold', fontSize=8.5, textColor=accent_blue, leading=11, alignment=2)
     
-    section_heading = ParagraphStyle('SectionHeading', fontName='Helvetica-Bold', fontSize=10.5, textColor=primary_color, leading=13, spaceBefore=8, spaceAfter=4)
-    cell_normal = ParagraphStyle('CellNormal', fontName='Helvetica', fontSize=8, textColor=colors.HexColor('#334155'), leading=10.5)
-    cell_bold = ParagraphStyle('CellBold', fontName='Helvetica-Bold', fontSize=8, textColor=primary_color, leading=10.5)
-    cell_mono = ParagraphStyle('CellMono', fontName='Courier', fontSize=7.5, textColor=colors.HexColor('#0F172A'), leading=10)
+    section_heading = ParagraphStyle('SectionHeading', fontName='Helvetica-Bold', fontSize=10, textColor=primary_color, leading=12, spaceBefore=6, spaceAfter=3)
+    cell_normal = ParagraphStyle('CellNormal', fontName='Helvetica', fontSize=7.5, textColor=colors.HexColor('#334155'), leading=10)
+    cell_bold = ParagraphStyle('CellBold', fontName='Helvetica-Bold', fontSize=7.5, textColor=primary_color, leading=10)
+    cell_mono = ParagraphStyle('CellMono', fontName='Courier', fontSize=7.5, textColor=colors.HexColor('#0F172A'), leading=9.5)
+    thead_style = ParagraphStyle('THeadStyle', fontName='Helvetica-Bold', fontSize=8, textColor=colors.white, leading=10)
+
+    # Banner Specific Styles (Explicit leading prevents text overlaps)
+    v_top_style = ParagraphStyle('VTop', fontName='Helvetica', fontSize=7.5, textColor=colors.white, leading=9)
+    v_main_style = ParagraphStyle('VMain', fontName='Helvetica-Bold', fontSize=12, textColor=colors.white, leading=15)
+    v_sub_style = ParagraphStyle('VSub', fontName='Helvetica', fontSize=7.5, textColor=colors.HexColor('#F1F5F9'), leading=9.5)
+    v_rec_head = ParagraphStyle('VRecHead', fontName='Helvetica-Bold', fontSize=7.5, textColor=colors.white, leading=9.5)
+    v_rec_body = ParagraphStyle('VRecBody', fontName='Helvetica', fontSize=7.5, textColor=colors.HexColor('#F8FAFC'), leading=10)
 
     # 1. HEADER WITH BRAND LOGO & METADATA
     logo_path = 'static/logo.png'
     logo_cell = []
     if os.path.exists(logo_path):
         try:
-            logo_img = Image(logo_path, width=44, height=44)
+            logo_img = Image(logo_path, width=40, height=40)
             logo_cell.append(logo_img)
         except Exception:
             pass
@@ -608,7 +617,7 @@ def export_report(history_id):
         Paragraph("Automated Cyber Threat & Forensic Risk Assessment Platform", subtitle_style)
     ]
 
-    left_header = Table([[logo_cell[0] if logo_cell else '', brand_text]], colWidths=[50, 240] if logo_cell else [0, 290])
+    left_header = Table([[logo_cell[0] if logo_cell else '', brand_text]], colWidths=[46, 244] if logo_cell else [0, 290])
     left_header.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('LEFTPADDING', (0,0), (-1,-1), 0),
@@ -629,10 +638,10 @@ def export_report(history_id):
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('LEFTPADDING', (0,0), (-1,-1), 0),
         ('RIGHTPADDING', (0,0), (-1,-1), 0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
     ]))
     story.append(header_table)
-    story.append(HRFlowable(width="100%", thickness=1.5, color=accent_blue, spaceBefore=4, spaceAfter=8))
+    story.append(HRFlowable(width="100%", thickness=1.5, color=accent_blue, spaceBefore=3, spaceAfter=6))
 
     # 2. EXECUTIVE VERDICT & RISK BADGE BANNER
     score_val = float(record[4])
@@ -657,49 +666,49 @@ def export_report(history_id):
         rec_text = "CRITICAL COMPROMISE RISK: Highly malicious URL / DGA botnet payload detected. Restrict network access."
 
     verdict_left = [
-        Paragraph(f"<font color='white' size='9'>ASSESSED RISK VERDICT</font>", cell_normal),
-        Paragraph(f"<font color='white' size='14'><b>{risk_level_str.upper()} — {score_val:.1f}% THREAT SCORE</b></font>", cell_bold),
-        Paragraph(f"<font color='#F1F5F9' size='8'>Target Payload Type: <b>{input_type_str}</b></font>", cell_normal)
+        Paragraph("ASSESSED RISK VERDICT", v_top_style),
+        Paragraph(f"<b>{risk_level_str.upper()} — {score_val:.1f}% THREAT SCORE</b>", v_main_style),
+        Paragraph(f"Target Payload Type: <b>{input_type_str}</b>", v_sub_style)
     ]
     verdict_right = [
-        Paragraph(f"<font color='white' size='8'><b>SOC REMEDIATION DIRECTIVE:</b></font>", cell_bold),
-        Paragraph(f"<font color='#F8FAFC' size='8'>{rec_text}</font>", cell_normal)
+        Paragraph("<b>SOC REMEDIATION DIRECTIVE:</b>", v_rec_head),
+        Paragraph(rec_text, v_rec_body)
     ]
 
     verdict_table = Table([[verdict_left, verdict_right]], colWidths=[280, 260])
     verdict_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), banner_bg),
-        ('PADDING', (0,0), (-1,-1), 8),
+        ('PADDING', (0,0), (-1,-1), 7),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('GRID', (0,0), (-1,-1), 1, banner_bg),
     ]))
     story.append(verdict_table)
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 5))
 
     # 3. TARGET PAYLOAD INSPECTION CONTAINER
     story.append(Paragraph("1. Target Payload Telemetry Extraction", section_heading))
     payload_table = Table([[
         Paragraph("<b>Target Input:</b>", cell_bold),
         Paragraph(target_content_str, cell_mono)
-    ]], colWidths=[80, 460])
+    ]], colWidths=[75, 465])
     payload_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F8FAFC')),
         ('BOX', (0,0), (-1,-1), 1, border_color),
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('PADDING', (0,0), (-1,-1), 6),
+        ('PADDING', (0,0), (-1,-1), 5),
     ]))
     story.append(payload_table)
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 5))
 
     # 4. MULTI-ENGINE SCORE DIFFERENTIATION & BREAKDOWN TABLE
     story.append(Paragraph("2. Multi-Engine Forensic Analysis & Score Differentiation", section_heading))
 
     engine_rows = [
         [
-            Paragraph("<b>Detection Engine</b>", cell_bold),
-            Paragraph("<b>Evaluated Telemetry & Parameters</b>", cell_bold),
-            Paragraph("<b>Engine Score</b>", cell_bold),
-            Paragraph("<b>Status / Verdict</b>", cell_bold)
+            Paragraph("Detection Engine", thead_style),
+            Paragraph("Evaluated Telemetry & Parameters", thead_style),
+            Paragraph("Engine Score", thead_style),
+            Paragraph("Status / Verdict", thead_style)
         ]
     ]
 
@@ -723,7 +732,7 @@ def export_report(history_id):
             Paragraph("<b>Lexical & Protocol Engine</b>", cell_normal),
             Paragraph(f"Evaluated URL structure, scheme, IP wrappers, and shortening.<br/><font color='#64748B'>Flags: {', '.join(lex_details)}</font>", cell_normal),
             Paragraph(f"{lex_score:.1f}%", cell_bold),
-            Paragraph("<font color='#DC2626'><b>Flagged</b></font>" if lex_score > 0 else "<font color='#059669'>Clean</font>", cell_normal)
+            Paragraph("<font color='#DC2626'><b>Flagged</b></font>" if lex_score > 0 else "<font color='#059669'><b>Clean</b></font>", cell_normal)
         ])
 
         # 2. Typosquatting & Brand Spoofing Engine
@@ -732,7 +741,7 @@ def export_report(history_id):
             Paragraph("<b>Typosquatting Engine</b>", cell_normal),
             Paragraph(f"Levenshtein brand distance matching against popular banking/tech targets.<br/><font color='#64748B'>Impersonation Target: {typo_match or 'None Detected'}</font>", cell_normal),
             Paragraph(f"{typo_score:.1f}%", cell_bold),
-            Paragraph(f"<font color='#DC2626'><b>Spoof Detected</b></font>" if typo_match else "<font color='#059669'>Authentic</font>", cell_normal)
+            Paragraph(f"<font color='#DC2626'><b>Spoof Detected</b></font>" if typo_match else "<font color='#059669'><b>Authentic</b></font>", cell_normal)
         ])
 
         # 3. DGA (Domain Generation Algorithm) Engine
@@ -742,7 +751,7 @@ def export_report(history_id):
             Paragraph("<b>DGA Entropy Engine</b>", cell_normal),
             Paragraph(f"Shannon character randomness, consonant clusters, and numeric DGA botnet seed heuristics.<br/><font color='#64748B'>{dga_status_str}</font>", cell_normal),
             Paragraph(f"{dga_score_val:.1f}%", cell_bold),
-            Paragraph(f"<font color='#DC2626'><b>DGA ({dga_info.get('confidence', 'None')})</b></font>" if dga_info.get('is_dga') else "<font color='#059669'>Dictionary Benign</font>", cell_normal)
+            Paragraph(f"<font color='#DC2626'><b>DGA ({dga_info.get('confidence', 'None')})</b></font>" if dga_info.get('is_dga') else "<font color='#059669'><b>Dictionary Benign</b></font>", cell_normal)
         ])
 
         # 4. Threat Intel & Reputation Engine
@@ -750,7 +759,7 @@ def export_report(history_id):
             Paragraph("<b>Reputation Threat Intel</b>", cell_normal),
             Paragraph("Multi-vendor global intelligence scan for known malware domains.", cell_normal),
             Paragraph("API Telemetry", cell_normal),
-            Paragraph("<font color='#059669'>Reputation Clear</font>", cell_normal)
+            Paragraph("<font color='#059669'><b>Reputation Clear</b></font>", cell_normal)
         ])
 
     else:
@@ -759,7 +768,7 @@ def export_report(history_id):
             Paragraph("<b>ML NLP Classifier</b>", cell_normal),
             Paragraph("TF-IDF Vectorizer + Multinomial Naive Bayes trained on phishing corpora.", cell_normal),
             Paragraph(f"{score_val:.1f}%", cell_bold),
-            Paragraph("<font color='#DC2626'><b>Phishing Pattern</b></font>" if score_val >= 45 else "<font color='#059669'>Safe Pattern</font>", cell_normal)
+            Paragraph("<font color='#DC2626'><b>Phishing Pattern</b></font>" if score_val >= 45 else "<font color='#059669'><b>Safe Pattern</b></font>", cell_normal)
         ])
         engine_rows.append([
             Paragraph("<b>Keyword Heuristics</b>", cell_normal),
@@ -776,17 +785,16 @@ def export_report(history_id):
 
     engine_table = Table(engine_rows, colWidths=[130, 250, 75, 85])
     engine_table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1E293B')),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('BACKGROUND', (0,0), (-1,0), table_head_bg),
         ('ALIGN', (0,0), (-1,-1), 'LEFT'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
-        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
         ('GRID', (0,0), (-1,-1), 0.5, border_color),
         ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#F8FAFC')])
     ]))
     story.append(engine_table)
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 5))
 
     # 5. SPECIFIC INDICATORS OF COMPROMISE (IoCs) & REASONS
     story.append(Paragraph("3. Identified Threat Indicators & Forensics", section_heading))
@@ -816,7 +824,7 @@ def export_report(history_id):
         ('PADDING', (0,0), (-1,-1), 4),
     ]))
     story.append(ioc_table)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 8))
 
     # 6. SIGN-OFF & COMPLIANCE FOOTER
     footer_text = Paragraph(
@@ -827,7 +835,7 @@ def export_report(history_id):
         "</font>", 
         ParagraphStyle('FooterNotice', alignment=1, leading=9)
     )
-    story.append(HRFlowable(width="100%", thickness=0.75, color=border_color, spaceBefore=4, spaceAfter=4))
+    story.append(HRFlowable(width="100%", thickness=0.75, color=border_color, spaceBefore=3, spaceAfter=3))
     story.append(footer_text)
 
     doc.build(story)
