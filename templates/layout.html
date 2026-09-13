@@ -276,8 +276,9 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between">
     <nav class="card mx-4 my-4 p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <a href="#" class="text-xl font-bold tracking-tight text-blue-700">
-            PhishShield <span class="text-slate-400 font-normal ml-1 text-sm tracking-normal">Enterprise Edition</span>
+        <a href="{{ url_for('dashboard') if session.get('user_id') else url_for('login') }}" class="flex items-center gap-3 text-xl font-bold tracking-tight text-blue-700 dark:text-blue-400">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="PhishShield Logo" class="h-10 w-10 rounded-xl object-cover shadow-md shadow-blue-500/20 ring-2 ring-blue-500/30">
+            <span>PhishShield <span class="text-slate-400 font-normal ml-1 text-sm tracking-normal">AI Enterprise</span></span>
         </a>
         <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-5 space-y-3 sm:space-y-0 text-sm font-semibold">
             {% if session.get('user_id') %}
