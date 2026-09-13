@@ -107,10 +107,13 @@ def init_db():
 init_db()
 load_ml_components()
 
-# --- URL Analysis Helper Engine ---
+# --- URL / Domain Analysis Helper Engine ---
 def is_valid_url(url):
     try:
-        parsed = urlparse(url.strip())
+        url_str = url.strip()
+        if not url_str.startswith(('http://', 'https://')):
+            url_str = 'http://' + url_str
+        parsed = urlparse(url_str)
         if parsed.scheme not in ('http', 'https'):
             return False
         if not parsed.netloc:
@@ -118,6 +121,9 @@ def is_valid_url(url):
         if parsed.netloc.startswith('.') or parsed.netloc.endswith('.'):
             return False
         if '@' in parsed.netloc and parsed.hostname is None:
+            return False
+        hostname = (parsed.hostname or '').strip()
+        if not hostname or '.' not in hostname:
             return False
         return True
     except Exception:
@@ -381,13 +387,16 @@ def dashboard():
             conn.close()
             return redirect(url_for('dashboard'))
 
-        if input_type == 'url' and not is_valid_url(content):
-            flash("Invalid URL format. Please submit a full URL beginning with http:// or https://", "danger")
-            conn.close()
-            return redirect(url_for('dashboard'))
+        if input_type == 'url':
+            if not is_valid_url(content):
+                flash("Invalid URL or Domain format. Please submit a valid domain or URL (e.g. example.com or https://example.com).", "danger")
+                conn.close()
+                return redirect(url_for('dashboard'))
+            if not content.startswith(('http://', 'https://')):
+                content = 'http://' + content
 
-        if input_type == 'text' and is_valid_url(content):
-            flash("You entered a URL but selected Email / SMS Content. Please switch Payload Type to Web URL.", "danger")
+        if input_type == 'text' and is_valid_url(content) and (' ' not in content and '\n' not in content):
+            flash("You entered a URL or Domain but selected Email / SMS Content. Please switch Payload Type to Web URL / Domain.", "danger")
             conn.close()
             return redirect(url_for('dashboard'))
 

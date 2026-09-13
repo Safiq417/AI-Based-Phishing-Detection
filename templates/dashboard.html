@@ -31,17 +31,17 @@
                     </button>
                     <div id="payloadTypeList" role="listbox" tabindex="-1" aria-labelledby="payloadTypeLabel" class="absolute left-0 right-0 z-20 mt-2 hidden max-h-52 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-lg ring-1 ring-slate-900/5 dark:border-slate-700 dark:bg-slate-900">
                         <div class="payload-option cursor-pointer px-4 py-3 text-slate-900 bg-white hover:bg-slate-100 dark:text-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800" role="option" data-value="text" data-label="Email / SMS Content" tabindex="0" aria-selected="true">Email / SMS Content</div>
-                        <div class="payload-option cursor-pointer px-4 py-3 text-slate-900 bg-white hover:bg-slate-100 dark:text-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800" role="option" data-value="url" data-label="Web URL" tabindex="0">Web URL</div>
+                        <div class="payload-option cursor-pointer px-4 py-3 text-slate-900 bg-white hover:bg-slate-100 dark:text-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800" role="option" data-value="url" data-label="Web URL / Domain" tabindex="0">Web URL / Domain</div>
                     </div>
                 </div>
                 <select name="type" id="payloadTypeSelect" class="hidden">
                     <option value="text">Email / SMS Content</option>
-                    <option value="url">Web URL</option>
+                    <option value="url">Web URL / Domain</option>
                 </select>
             </div>
             <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-1">Target Data</label>
-                <textarea name="content" rows="6" required class="input-field text-sm" placeholder="Paste message text or full URL here..."></textarea>
+                <textarea name="content" rows="6" required class="input-field text-sm" placeholder="Paste message text, domain (e.g. example.com), or full URL here..."></textarea>
             </div>
             <button type="submit" class="btn-primary">Analyze Threat</button>
         </form>
@@ -247,8 +247,28 @@
         if (e.target === this) closeValidationModal();
     });
 
+    function isValidURLorDomain(text) {
+        const trimmed = text.trim();
+        if (/^https?:\/\//i.test(trimmed)) {
+            return true;
+        }
+        // Match domain patterns like example.com, sub.domain.co.in, or ip
+        if (/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(\/.*)?$/i.test(trimmed)) {
+            return true;
+        }
+        if (/^\d{1,3}(?:\.\d{1,3}){3}(:\d+)?(\/.*)?$/i.test(trimmed)) {
+            return true;
+        }
+        return false;
+    }
+
     function isLikelyURL(text) {
-        return /^https?:\/\//i.test(text) || /^www\./i.test(text) || /^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/|$)/i.test(text.split(' ')[0]);
+        const trimmed = text.trim();
+        // If multiple words or newlines, it's text/message
+        if (trimmed.includes(' ') || trimmed.includes('\n')) {
+            return false;
+        }
+        return isValidURLorDomain(trimmed);
     }
 
     function validatePayload() {
@@ -260,21 +280,21 @@
             return false;
         }
 
-        // Case 1: Email/SMS selected but URL entered
+        // Case 1: Email/SMS selected but single URL/Domain entered
         if (payloadType === 'text' && isLikelyURL(contentInput)) {
             showValidationModal(
                 'Wrong Payload Type Selected',
-                'You entered a URL but "Email / SMS Content" is selected. Please switch to "Web URL" to analyze a link.',
+                'You entered a URL / Domain name but "Email / SMS Content" is selected. Please switch to "Web URL / Domain" to analyze this link.',
                 'url'
             );
             return false;
         }
 
-        // Case 2: Web URL selected but non-URL text entered
-        if (payloadType === 'url' && !contentInput.match(/^https?:\/\//i)) {
+        // Case 2: Web URL / Domain selected but invalid format
+        if (payloadType === 'url' && !isValidURLorDomain(contentInput)) {
             showValidationModal(
-                'Invalid URL Format',
-                'You selected "Web URL" but the input does not look like a URL. URLs must start with http:// or https://. For email or SMS text, switch to "Email / SMS Content".',
+                'Invalid URL or Domain Format',
+                'You selected "Web URL / Domain" but the input does not look like a valid domain or URL. Please enter a domain (e.g. example.com) or a full URL (e.g. https://example.com). For email or SMS messages, switch to "Email / SMS Content".',
                 'text'
             );
             return false;
