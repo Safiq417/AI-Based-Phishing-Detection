@@ -1045,6 +1045,10 @@ def ai_chat():
             return jsonify({'error': 'Invalid Groq API key. Please verify your API key on console.groq.com.'}), 500
         return jsonify({'error': f'AI service error: {err_msg}'}), 500
 
+@app.route('/demo')
+def demo_presentation():
+    return render_template('demo.html')
+
 if __name__ == '__main__':
     # Fallback initialization check
     if not os.path.exists('model/phishing_model.pkl'):
