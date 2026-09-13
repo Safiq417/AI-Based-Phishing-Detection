@@ -7,6 +7,7 @@ from datetime import datetime
 from urllib.parse import urlparse
 from difflib import SequenceMatcher
 import time
+from dga_detector import analyze_dga
 VIRUSTOTAL_API_KEY = os.environ.get('VIRUSTOTAL_API_KEY')
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
 
@@ -437,6 +438,21 @@ def dashboard():
             url_features = analyze_url_lexical(content)
             heuristic_score = url_features["score_deduction"]
             base_score = min(base_score + heuristic_score, 100.0)
+
+            # DGA (Domain Generation Algorithm) Detection
+            dga_result = analyze_dga(content)
+            if dga_result and dga_result.get('is_dga'):
+                dga_penalty = min(dga_result.get('dga_score', 50.0), 65.0)
+                base_score = min(base_score + dga_penalty, 100.0)
+                reasons.append(f"DGA Detection: Algorithmic domain generation pattern detected (Entropy: {dga_result['entropy']:.2f}, Risk: {dga_result['confidence']})")
+                for dga_reason in dga_result.get('reasons', []):
+                    reasons.append(f"DGA Flag: {dga_reason}")
+            elif dga_result and dga_result.get('dga_score', 0) > 0 and dga_result.get('confidence') in ('Low', 'Medium'):
+                minor_penalty = min(dga_result['dga_score'] * 0.4, 20.0)
+                base_score = min(base_score + minor_penalty, 100.0)
+                for dga_reason in dga_result.get('reasons', []):
+                    reasons.append(f"DGA Warning: {dga_reason}")
+
             typosquat_match = check_typosquatting(content)
             if typosquat_match:
                 base_score = min(base_score + 55, 100.0)
@@ -479,6 +495,8 @@ def dashboard():
         if input_type == 'text':
             breakdown_parts.append(f"ML Model: {ml_score:.1f}%")
             breakdown_parts.append(f"Keyword Score: {keyword_score:.1f}%")
+        if input_type == 'url' and dga_result and dga_result.get('is_dga'):
+            breakdown_parts.append(f"DGA Pattern: {dga_result['confidence']} Risk (Entropy {dga_result['entropy']:.2f})")
         if input_type == 'url' and vt_result:
             vt_malicious = vt_result.get('malicious', 0)
             vt_suspicious = vt_result.get('suspicious', 0)
@@ -559,6 +577,14 @@ def export_report(history_id):
         [Paragraph("Assigned Classification Level Matrix", normal_style), Paragraph(str(record[5]), normal_style)],
         [Paragraph("System Telemetry Timestamp", normal_style), Paragraph(str(record[6]), normal_style)]
     ]
+
+    if str(record[2]).lower() == 'url':
+        dga_info = analyze_dga(str(record[3]))
+        dga_status = "Detected / High Risk" if dga_info.get('is_dga') else f"Benign (Entropy: {dga_info.get('entropy', 0.0)})"
+        report_data.append([
+            Paragraph("DGA Domain Randomness Entropy", normal_style),
+            Paragraph(f"{dga_status} [SLD: {dga_info.get('sld', 'N/A')}]", normal_style)
+        ])
     
     t = Table(report_data, colWidths=[200, 300])
     t.setStyle(TableStyle([
@@ -680,9 +706,9 @@ def ai_chat():
     "You are PhishShield AI, a cybersecurity assistant built by the Safiq Ansari & team. "
     "You were not made by OpenAI, Google, or any other company. Never reveal your underlying model. "
     "How to use this website: Users register/login, then go to the Dashboard where they can submit either a Web URL or Email/SMS text for phishing analysis. "
-    "The system analyzes it using a machine learning model, VirusTotal API (for URLs), and AI analysis, then shows a risk score and risk level (Safe, Low, Medium, High, Critical) with reasons. "
+    "The system analyzes it using a machine learning model, VirusTotal API (for URLs), Domain Generation Algorithm (DGA) entropy heuristics, and AI analysis, then shows a risk score and risk level (Safe, Low, Medium, High, Critical) with reasons. "
     "Users can view their scan history on the dashboard and export any past scan as a PDF report. "
-    "Answer clearly for beginners, explain phishing, malicious URLs, malware, ransomware, passwords, MFA, social engineering, network security, SOC, and related security topics. "
+    "Answer clearly for beginners, explain phishing, malicious URLs, DGA (Domain Generation Algorithms), malware, ransomware, passwords, MFA, social engineering, network security, SOC, and related security topics. "
     "If the user asks about the current URL analysis, use the provided analysis details from context to explain risk results and suspicious indicators. "
     "If asked how to use the website, explain the steps above clearly. "
     "Do not mention any internal errors or API keys. Keep responses helpful and concise. "

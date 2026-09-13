@@ -5,6 +5,7 @@ An intelligent cyber defense application that utilizes specialized machine learn
 
 ## Core Feature Architecture
 * **Hybrid Classification Engine**: Leverages a robust Natural Language Processing (NLP) framework combined with a Naive Bayes Classifier pipeline for deep threat identification.
+* **Domain Generation Algorithm (DGA) Engine**: Evaluates Shannon character entropy, vowel-to-consonant ratios, consonant clusters, and numeric/hash patterns to detect algorithmically generated malware and C2 botnet domains.
 * **Lexical URL Mutation Detection**: Automates string telemetry scans to detect malicious design implementations (such as embedded IPv4 patterns, shortened linkages, structural TLD shifts, and absence of HTTPS wrappers).
 * **Role-Based Audit Verification**: Built-in user separation with an automated dashboard for administrative oversight and centralized security log validation.
 
