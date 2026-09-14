@@ -1,38 +1,38 @@
 {% extends 'layout.html' %}
 {% block content %}
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    <div class="card p-6 flex flex-col justify-center items-center border-l-4 border-blue-500">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Scans Performed</span>
-        <span id="totalScansCount" class="text-4xl font-extrabold text-slate-900 dark:text-slate-100 mt-2">{{ total_scans }}</span>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+    <div class="card p-4 sm:p-6 flex flex-col justify-center items-center border-l-4 border-blue-500">
+        <span class="text-[0.7rem] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center">Total Scans Performed</span>
+        <span id="totalScansCount" class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100 mt-1.5 sm:mt-2">{{ total_scans }}</span>
     </div>
-    <div class="card p-6 flex flex-col justify-center items-center border-l-4 border-red-500">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">High Risk Threats Detected</span>
-        <span id="totalThreatsCount" class="text-4xl font-extrabold text-red-600 dark:text-red-500 mt-2">{{ total_threats }}</span>
+    <div class="card p-4 sm:p-6 flex flex-col justify-center items-center border-l-4 border-red-500">
+        <span class="text-[0.7rem] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center">High Risk Threats Detected</span>
+        <span id="totalThreatsCount" class="text-3xl sm:text-4xl font-extrabold text-red-600 dark:text-red-500 mt-1.5 sm:mt-2">{{ total_threats }}</span>
     </div>
-    <div class="card p-6 flex justify-center items-center">
+    <div class="card p-4 sm:p-6 sm:col-span-2 lg:col-span-1 flex justify-center items-center">
         <div class="w-full h-32 relative">
             <canvas id="riskDistributionChart"></canvas>
         </div>
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-1 flex flex-col gap-6">
-        <div class="card p-6 h-fit">
-            <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-800 pb-3">
-                <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Forensic Threat Scanner</h3>
-                <span class="text-[0.65rem] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">v2.0 Pro</span>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+    <div class="lg:col-span-1 flex flex-col gap-4 sm:gap-6">
+        <div class="card p-4 sm:p-6 h-fit">
+            <div class="flex items-center justify-between mb-3.5 sm:mb-4 border-b border-slate-200 dark:border-slate-800 pb-3">
+                <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Forensic Threat Scanner</h3>
+                <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">v2.0 Pro</span>
             </div>
 
             <!-- 3-Tab Glassmorphic Mode Switcher -->
-            <div class="flex p-1 bg-slate-100/90 dark:bg-slate-900/90 rounded-2xl mb-5 border border-slate-200 dark:border-slate-800">
-                <button id="tabBtnQuick" onclick="switchScanTab('quick')" type="button" class="flex-1 py-2 text-xs font-bold rounded-xl transition shadow-sm bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400">
+            <div class="flex p-1 bg-slate-100/90 dark:bg-slate-900/90 rounded-2xl mb-4 sm:mb-5 border border-slate-200 dark:border-slate-800">
+                <button id="tabBtnQuick" onclick="switchScanTab('quick')" type="button" class="flex-1 py-2 px-1 sm:px-2 text-[0.7rem] sm:text-xs font-bold rounded-xl transition shadow-sm bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400">
                     🔗 Quick
                 </button>
-                <button id="tabBtnWebsite" onclick="switchScanTab('website')" type="button" class="flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
+                <button id="tabBtnWebsite" onclick="switchScanTab('website')" type="button" class="flex-1 py-2 px-1 sm:px-2 text-[0.7rem] sm:text-xs font-bold rounded-xl transition text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
                     🌐 Web Inspector
                 </button>
-                <button id="tabBtnScreenshot" onclick="switchScanTab('screenshot')" type="button" class="flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
+                <button id="tabBtnScreenshot" onclick="switchScanTab('screenshot')" type="button" class="flex-1 py-2 px-1 sm:px-2 text-[0.7rem] sm:text-xs font-bold rounded-xl transition text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
                     📸 Screenshot OCR
                 </button>
             </div>
@@ -134,29 +134,30 @@
     </div>
 
     <div class="lg:col-span-2 card p-0 overflow-hidden">
-        <div class="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80">
-            <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Recent Detection History</h3>
+        <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+            <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Recent Detection History</h3>
+            <span class="text-[0.68rem] text-slate-400 dark:text-slate-500 font-medium sm:hidden">← Swipe table →</span>
         </div>
-        <div class="overflow-x-auto p-5">
-            <table class="w-full text-left text-sm">
+        <div class="overflow-x-auto p-3 sm:p-5" style="-webkit-overflow-scrolling: touch;">
+            <table class="w-full text-left text-xs sm:text-sm min-w-[480px]">
                 <thead>
-                    <tr class="text-slate-500 dark:text-slate-400 uppercase text-xs tracking-wider border-b border-slate-200 dark:border-slate-800">
-                        <th class="pb-3 font-bold">Type</th>
-                        <th class="pb-3 font-bold">Excerpt</th>
-                        <th class="pb-3 font-bold">AI Score</th>
-                        <th class="pb-3 font-bold">Classification</th>
-                        <th class="pb-3 font-bold">Report</th>
+                    <tr class="text-slate-500 dark:text-slate-400 uppercase text-[0.7rem] sm:text-xs tracking-wider border-b border-slate-200 dark:border-slate-800">
+                        <th class="pb-2.5 font-bold">Type</th>
+                        <th class="pb-2.5 font-bold">Excerpt</th>
+                        <th class="pb-2.5 font-bold">AI Score</th>
+                        <th class="pb-2.5 font-bold">Classification</th>
+                        <th class="pb-2.5 font-bold">Report</th>
                     </tr>
                 </thead>
                 <tbody id="historyTableBody" class="text-slate-700 dark:text-slate-200">
                     {% for row in history %}
                     <tr class="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
-                        <td class="py-3 uppercase font-semibold text-xs text-slate-500 dark:text-slate-400">{{ row[2] }}</td>
-                        <td class="py-3 truncate max-w-[200px]" title="{{ row[3] }}">{{ row[3] }}</td>
-                        <td class="py-3 font-bold text-slate-900 dark:text-slate-100">{{ "%.1f"|format(row[4]) }}%</td>
-                        <td class="py-3">
+                        <td class="py-2.5 sm:py-3 uppercase font-semibold text-[0.7rem] sm:text-xs text-slate-500 dark:text-slate-400">{{ row[2] }}</td>
+                        <td class="py-2.5 sm:py-3 truncate max-w-[160px] sm:max-w-[200px]" title="{{ row[3] }}">{{ row[3] }}</td>
+                        <td class="py-2.5 sm:py-3 font-bold text-slate-900 dark:text-slate-100">{{ "%.1f"|format(row[4]) }}%</td>
+                        <td class="py-2.5 sm:py-3">
                             {% set r_clean = (row[5] or '')|string|lower %}
-                            <span class="px-2.5 py-1 rounded-full text-xs font-bold 
+                            <span class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[0.68rem] sm:text-xs font-bold 
                             {% if 'safe' in r_clean %} bg-green-100 text-green-700 dark:bg-green-900/60 dark:text-green-300
                             {% elif 'low' in r_clean %} bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300
                             {% elif 'medium' in r_clean or 'suspicious' in r_clean %} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/60 dark:text-yellow-300
@@ -164,10 +165,10 @@
                                 {{ row[5] }}
                             </span>
                         </td>
-                        <td class="py-3 flex gap-3">
-    <a href="{{ url_for('export_report', history_id=row[0]) }}" class="text-blue-600 dark:text-blue-400 font-semibold hover:underline text-xs">PDF</a>
-    <a href="{{ url_for('delete_history', id=row[0]) }}" class="text-red-500 dark:text-red-400 font-semibold hover:underline text-xs" onclick="return confirm('Delete this scan?')">Delete</a>
-</td>
+                        <td class="py-2.5 sm:py-3 flex gap-2 sm:gap-3">
+                            <a href="{{ url_for('export_report', history_id=row[0]) }}" class="text-blue-600 dark:text-blue-400 font-semibold hover:underline text-xs">PDF</a>
+                            <a href="{{ url_for('delete_history', id=row[0]) }}" class="text-red-500 dark:text-red-400 font-semibold hover:underline text-xs" onclick="return confirm('Delete this scan?')">Delete</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -177,11 +178,11 @@
 </div>
 
 <!-- Floating AI Toggle Button (Fully draggable anywhere, 1:1 cursor sync) -->
-<div id="chatToggleBtn" class="fixed right-6 bottom-6 z-50 inline-flex items-center gap-2 rounded-full bg-slate-900 dark:bg-slate-100 px-4 py-3 text-sm font-bold text-white dark:text-slate-900 shadow-2xl shadow-blue-500/25 ring-1 ring-white/20 cursor-grab active:cursor-grabbing select-none" style="touch-action: none;">
+<div id="chatToggleBtn" class="fixed right-3 bottom-3 sm:right-6 sm:bottom-6 z-50 inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-slate-900 dark:bg-slate-100 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-bold text-white dark:text-slate-900 shadow-2xl shadow-blue-500/25 ring-1 ring-white/20 cursor-grab active:cursor-grabbing select-none" style="touch-action: none;">
     <span class="text-xs text-slate-400 dark:text-slate-500 mr-0.5">⠿</span>
     <span>PhishShield AI</span>
-    <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <span class="inline-flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 10h.01M12 10h.01M16 10h.01" />
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
@@ -189,9 +190,9 @@
 </div>
 
 <!-- Standalone Chat Window (Smart viewport clamping, movable via header) -->
-<div id="chatPanel" class="fixed z-50 hidden w-[360px] max-w-[94vw] rounded-[1.5rem] border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl shadow-2xl shadow-slate-900/30 ring-1 ring-black/5 dark:ring-white/10 overflow-hidden flex flex-col select-text" style="touch-action: none;">
+<div id="chatPanel" class="fixed z-50 hidden w-[calc(100vw-24px)] sm:w-[360px] max-w-[96vw] rounded-[1.5rem] border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl shadow-2xl shadow-slate-900/30 ring-1 ring-black/5 dark:ring-white/10 overflow-hidden flex flex-col select-text" style="touch-action: none;">
     <!-- Header (Drag Handle) -->
-    <div id="chatPanelHeader" class="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/80 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 cursor-grab active:cursor-grabbing select-none">
+    <div id="chatPanelHeader" class="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/80 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 cursor-grab active:cursor-grabbing select-none">
         <div class="flex items-center gap-2">
             <span class="text-slate-400 text-xs">⠿</span>
             <span class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -201,23 +202,23 @@
     </div>
 
     <!-- Quick Prompts Suggestions Bar -->
-    <div class="flex items-center gap-1.5 px-3 py-2 bg-slate-100/60 dark:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50 overflow-x-auto text-[0.72rem] no-scrollbar">
+    <div class="flex items-center gap-1.5 px-3 py-2 bg-slate-100/60 dark:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50 overflow-x-auto text-[0.7rem] sm:text-[0.72rem] no-scrollbar">
         <button type="button" onclick="sendQuickPrompt('Is my last scanned URL safe?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-500 hover:text-blue-600 transition shadow-xs">🛡️ Is URL Safe?</button>
         <button type="button" onclick="sendQuickPrompt('How to spot a fake login page?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-500 hover:text-blue-600 transition shadow-xs">🔍 Spot Fake Sites</button>
         <button type="button" onclick="sendQuickPrompt('Explain phishing risk indicators')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-500 hover:text-blue-600 transition shadow-xs">⚠️ Threat Tips</button>
     </div>
 
     <!-- Chat Messages -->
-    <div id="chatMessages" class="h-[270px] max-h-[300px] space-y-3 overflow-y-auto px-4 py-3 text-sm text-slate-800 dark:text-slate-100">
-        <div class="rounded-2xl bg-slate-100/90 dark:bg-slate-800/90 px-4 py-3 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 shadow-xs">
+    <div id="chatMessages" class="h-[250px] sm:h-[270px] max-h-[50vh] sm:max-h-[300px] space-y-3 overflow-y-auto px-3.5 sm:px-4 py-3 text-xs sm:text-sm text-slate-800 dark:text-slate-100">
+        <div class="rounded-2xl bg-slate-100/90 dark:bg-slate-800/90 px-3.5 sm:px-4 py-2.5 sm:py-3 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 shadow-xs">
             <p class="whitespace-pre-wrap text-xs leading-relaxed">👋 Hi! Ask me anything about your scanned URLs, threat indicators, or security advice.</p>
         </div>
     </div>
 
     <!-- Chat Input & Controls -->
-    <div class="border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 px-3.5 py-2.5">
+    <div class="border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 px-3 sm:px-3.5 py-2 sm:py-2.5">
         <div class="flex items-center gap-2">
-            <textarea id="chatInput" rows="1" placeholder="Ask AI assistant..." class="input-field chat-input-textarea min-h-[42px] max-h-[120px] w-full min-w-0 flex-1 resize-none rounded-xl px-3.5 py-2 text-xs leading-relaxed placeholder-slate-400 text-slate-900 dark:text-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" aria-label="Chat message"></textarea>
+            <textarea id="chatInput" rows="1" placeholder="Ask AI assistant..." class="input-field chat-input-textarea min-h-[40px] max-h-[120px] w-full min-w-0 flex-1 resize-none rounded-xl px-3 sm:px-3.5 py-2 text-xs leading-relaxed placeholder-slate-400 text-slate-900 dark:text-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" aria-label="Chat message"></textarea>
             <button id="chatSendBtn" type="button" class="chat-send-button inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 transition-transform duration-150 hover:scale-105 active:scale-95 focus:outline-none" aria-label="Send message">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -225,7 +226,7 @@
                 </svg>
             </button>
         </div>
-        <div class="mt-1.5 flex items-center justify-between gap-2 text-[0.7rem] text-slate-500 dark:text-slate-400">
+        <div class="mt-1.5 flex items-center justify-between gap-2 text-[0.68rem] sm:text-[0.7rem] text-slate-500 dark:text-slate-400">
             <span id="chatStatus" class="truncate">Ready to help 🛡️</span>
             <button id="chatClearBtn" type="button" class="shrink-0 font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 transition">Clear</button>
         </div>
@@ -541,25 +542,33 @@
         const chatPanel = document.getElementById('chatPanel');
         if (!toggleBtn || !chatPanel) return;
 
-        const btnRect = toggleBtn.getBoundingClientRect();
+        const isMobile = window.innerWidth < 640;
         const panelWidth = Math.min(360, window.innerWidth - 24);
-        const panelHeight = Math.min(480, window.innerHeight - 24);
+        const panelHeight = Math.min(460, window.innerHeight - (isMobile ? 80 : 30));
 
-        // Calculate preferred position: above the toggle button, aligned to its right
-        let targetLeft = btnRect.right - panelWidth;
-        let targetTop = btnRect.top - panelHeight - 12;
+        let targetLeft, targetTop;
 
-        // If not enough room above, place below button
-        if (targetTop < 12) {
-            targetTop = btnRect.bottom + 12;
+        if (isMobile) {
+            targetLeft = (window.innerWidth - panelWidth) / 2;
+            targetTop = Math.max(12, window.innerHeight - panelHeight - 20);
+        } else {
+            const btnRect = toggleBtn.getBoundingClientRect();
+            // Calculate preferred position: above the toggle button, aligned to its right
+            targetLeft = btnRect.right - panelWidth;
+            targetTop = btnRect.top - panelHeight - 12;
+
+            // If not enough room above, place below button
+            if (targetTop < 12) {
+                targetTop = btnRect.bottom + 12;
+            }
+
+            // Clamp inside visible viewport
+            const maxLeft = window.innerWidth - panelWidth - 12;
+            const maxTop = window.innerHeight - panelHeight - 12;
+
+            targetLeft = Math.max(12, Math.min(targetLeft, maxLeft));
+            targetTop = Math.max(12, Math.min(targetTop, maxTop));
         }
-
-        // Clamp inside visible viewport
-        const maxLeft = window.innerWidth - panelWidth - 12;
-        const maxTop = window.innerHeight - panelHeight - 12;
-
-        targetLeft = Math.max(12, Math.min(targetLeft, maxLeft));
-        targetTop = Math.max(12, Math.min(targetTop, maxTop));
 
         chatPanel.style.left = `${targetLeft}px`;
         chatPanel.style.top = `${targetTop}px`;

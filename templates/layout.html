@@ -308,32 +308,73 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between">
-    <nav class="card mx-4 my-4 p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <a href="{{ url_for('dashboard') if session.get('user_id') else url_for('login') }}" class="flex items-center gap-3 text-xl font-bold tracking-tight text-blue-700 dark:text-blue-400">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="PhishShield Logo" class="h-10 w-10 rounded-xl object-cover shadow-md shadow-blue-500/20 ring-2 ring-blue-500/30">
-            <span>PhishShield <span class="text-slate-400 font-normal ml-1 text-sm tracking-normal">AI Enterprise</span></span>
-        </a>
-        <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-5 space-y-3 sm:space-y-0 text-sm font-semibold">
-            <a href="{{ url_for('demo_presentation') }}" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-500/25 transition transform hover:scale-105">
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
+    <nav class="card mx-3 sm:mx-4 my-3 sm:my-4 p-3.5 sm:p-4 transition-all duration-300">
+        <div class="flex items-center justify-between">
+            <a href="{{ url_for('dashboard') if session.get('user_id') else url_for('login') }}" class="flex items-center gap-2.5 sm:gap-3 text-lg sm:text-xl font-bold tracking-tight text-blue-700 dark:text-blue-400">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="PhishShield Logo" class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl object-cover shadow-md shadow-blue-500/20 ring-2 ring-blue-500/30">
+                <span class="truncate">PhishShield <span class="text-slate-400 font-normal ml-1 text-xs sm:text-sm tracking-normal">AI Enterprise</span></span>
+            </a>
+
+            <!-- Mobile Hamburger & Quick Theme Toggle -->
+            <div class="flex items-center gap-2 md:hidden">
+                <button type="button" id="themeToggleMobile" class="theme-toggle-btn !p-2 !rounded-xl" aria-label="Toggle theme">
+                    <span id="themeIconMobile">🌓</span>
+                </button>
+                <button type="button" id="mobileMenuBtn" class="inline-flex items-center justify-center p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" aria-label="Toggle mobile menu" aria-expanded="false">
+                    <svg class="h-6 w-6" id="hamburgerIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    <svg class="h-6 w-6 hidden" id="closeIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex md:items-center md:space-x-5 text-sm font-semibold">
+                <a href="{{ url_for('demo_presentation') }}" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-500/25 transition transform hover:scale-105">
+                    <span>🎥</span>
+                    <span>Live Demo Video</span>
+                </a>
+                {% if session.get('user_id') %}
+                    <div class="flex items-center space-x-4">
+                        <a href="{{ url_for('dashboard') }}" class="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition">Dashboard</a>
+                        {% if session.get('role') == 'admin' %}
+                            <a href="{{ url_for('admin_panel') }}" class="text-purple-600 hover:text-purple-700 dark:text-purple-400 transition">Admin Console</a>
+                        {% endif %}
+                        <a href="{{ url_for('logout') }}" class="text-red-600 hover:text-red-700 dark:text-red-400 transition">Log Out</a>
+                    </div>
+                {% else %}
+                    <div class="flex items-center space-x-4">
+                        <a href="{{ url_for('login') }}" class="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition">Login</a>
+                        <a href="{{ url_for('register') }}" class="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition">Register</a>
+                    </div>
+                {% endif %}
+                <button type="button" id="themeToggle" class="theme-toggle-btn" aria-label="Toggle theme">Theme</button>
+            </div>
+        </div>
+
+        <!-- Collapsible Mobile Menu Drawer -->
+        <div id="mobileNavMenu" class="hidden md:hidden pt-4 mt-3 border-t border-slate-200/80 dark:border-slate-800/80 space-y-3">
+            <a href="{{ url_for('demo_presentation') }}" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm shadow-md">
                 <span>🎥</span>
                 <span>Live Demo Video</span>
             </a>
             {% if session.get('user_id') %}
-                <div class="flex flex-wrap gap-3 items-center">
-                    <a href="{{ url_for('dashboard') }}" class="text-slate-600 hover:text-blue-600 transition">Dashboard</a>
+                <div class="flex flex-col space-y-2 text-sm font-semibold">
+                    <a href="{{ url_for('dashboard') }}" class="px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition">🛡️ Dashboard</a>
                     {% if session.get('role') == 'admin' %}
-                        <a href="{{ url_for('admin_panel') }}" class="text-purple-600 hover:text-purple-700 transition">Admin Console</a>
+                        <a href="{{ url_for('admin_panel') }}" class="px-3 py-2 rounded-xl hover:bg-purple-100 dark:hover:bg-purple-900/40 text-purple-600 dark:text-purple-400 transition">⚙️ Admin Console</a>
                     {% endif %}
-                    <a href="{{ url_for('logout') }}" class="text-red-600 hover:text-red-700 transition">Log Out</a>
+                    <a href="{{ url_for('logout') }}" class="px-3 py-2 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 transition">🚪 Log Out</a>
                 </div>
             {% else %}
-                <div class="flex flex-wrap gap-3 items-center">
-                    <a href="{{ url_for('login') }}" class="text-slate-600 hover:text-blue-600 transition">Login</a>
-                    <a href="{{ url_for('register') }}" class="text-slate-600 hover:text-blue-600 transition">Register</a>
+                <div class="flex flex-col space-y-2 text-sm font-semibold">
+                    <a href="{{ url_for('login') }}" class="px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition">🔑 Login</a>
+                    <a href="{{ url_for('register') }}" class="px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition">📝 Register</a>
                 </div>
             {% endif %}
-            <button type="button" id="themeToggle" class="theme-toggle-btn" aria-label="Toggle theme">Theme</button>
         </div>
     </nav>
 
@@ -360,7 +401,11 @@
         (function() {
             const root = document.documentElement;
             const toggleBtn = document.getElementById('themeToggle');
-            if (!toggleBtn) return;
+            const toggleBtnMobile = document.getElementById('themeToggleMobile');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileNavMenu = document.getElementById('mobileNavMenu');
+            const hamburgerIcon = document.getElementById('hamburgerIcon');
+            const closeIcon = document.getElementById('closeIcon');
 
             const setTheme = (theme, persist = true) => {
                 root.classList.remove('theme-light', 'theme-dark', 'dark');
@@ -369,7 +414,12 @@
                     root.classList.add('dark');
                 }
                 root.setAttribute('data-theme', theme);
-                toggleBtn.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+                if (toggleBtn) {
+                    toggleBtn.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+                }
+                if (toggleBtnMobile) {
+                    toggleBtnMobile.innerHTML = theme === 'dark' ? '☀️' : '🌙';
+                }
                 if (persist) localStorage.setItem('phishshield-theme', theme);
             };
 
@@ -379,10 +429,25 @@
 
             setTheme(initialTheme, false);
 
-            toggleBtn.addEventListener('click', () => {
+            const toggleThemeAction = () => {
                 const currentTheme = root.classList.contains('theme-dark') ? 'dark' : 'light';
                 setTheme(currentTheme === 'dark' ? 'light' : 'dark');
-            });
+            };
+
+            if (toggleBtn) toggleBtn.addEventListener('click', toggleThemeAction);
+            if (toggleBtnMobile) toggleBtnMobile.addEventListener('click', toggleThemeAction);
+
+            if (mobileMenuBtn && mobileNavMenu) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    const isExpanded = mobileNavMenu.classList.contains('hidden');
+                    mobileNavMenu.classList.toggle('hidden');
+                    mobileMenuBtn.setAttribute('aria-expanded', String(isExpanded));
+                    if (hamburgerIcon && closeIcon) {
+                        hamburgerIcon.classList.toggle('hidden', isExpanded);
+                        closeIcon.classList.toggle('hidden', !isExpanded);
+                    }
+                });
+            }
 
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
                 if (!localStorage.getItem('phishshield-theme')) {
