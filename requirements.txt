@@ -8,3 +8,4 @@ Werkzeug
 requests
 python-dotenv
 Pillow
+beautifulsoup4

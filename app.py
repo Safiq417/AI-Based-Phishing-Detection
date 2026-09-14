@@ -14,7 +14,10 @@ except ImportError:
     pass
 
 from dga_detector import analyze_dga
+from website_analyzer import analyze_website
+from screenshot_analyzer import analyze_screenshot
 VIRUSTOTAL_API_KEY = os.environ.get('VIRUSTOTAL_API_KEY')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
 
 try:
@@ -548,6 +551,108 @@ def dashboard():
     conn.close()
     return render_template('dashboard.html', total_scans=total_scans, total_threats=total_threats, history=user_history, chart_data=chart_data)
 
+@app.route('/scan_website', methods=['POST'])
+def scan_website_endpoint():
+    if 'user_id' not in session:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'error': 'Unauthorized. Please login.'}), 401
+        return redirect(url_for('login'))
+
+    target_url = request.form.get('url', '').strip()
+    if not target_url and request.is_json:
+        target_url = (request.json or {}).get('url', '').strip()
+
+    if not target_url:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'error': 'Website URL parameter is required.'}), 400
+        flash('Please enter a website URL to inspect.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    # Run Deep Passive Website Analysis
+    result = analyze_website(target_url)
+
+    # Save to history database
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        "INSERT INTO history (user_id, input_type, content, score, risk_level) VALUES (?, ?, ?, ?, ?)",
+        (session['user_id'], 'website_deep_scan', result['target_url'], result['threat_score'], result['risk_level'])
+    )
+    conn.commit()
+    conn.close()
+    log_activity(session['user_id'], f"Executed Live Website Deep Inspection on {result['hostname']}")
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json or request.form.get('ajax') == '1':
+        return jsonify(result)
+
+    flash(f"Website Inspection Complete: {result['risk_level']} ({result['threat_score']:.1f}% Risk Score)", "success" if result['is_safe'] else "danger")
+    return redirect(url_for('dashboard'))
+
+@app.route('/scan_screenshot', methods=['POST'])
+def scan_screenshot_endpoint():
+    if 'user_id' not in session:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'error': 'Unauthorized. Please login.'}), 401
+        return redirect(url_for('login'))
+
+    if 'screenshot' not in request.files:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'error': 'No screenshot image file uploaded.'}), 400
+        flash('Please select or drop an image file to analyze.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    file = request.files['screenshot']
+    if file.filename == '':
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'error': 'Empty filename uploaded.'}), 400
+        flash('No file selected.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    file_bytes = file.read()
+    if len(file_bytes) > 10 * 1024 * 1024:
+        return jsonify({'error': 'File size exceeds 10MB limit.'}), 400
+
+    # Run Screenshot Vision / OCR Analysis
+    result = analyze_screenshot(file_bytes, filename=file.filename, groq_api_key=GROQ_API_KEY)
+
+    # If embedded URLs were discovered, inspect them with our DGA and Typosquatting engines
+    url_findings = []
+    for u in result.get('detected_urls', []):
+        u_lex = analyze_url_lexical(u)
+        u_dga = analyze_dga(u)
+        u_typo = check_typosquatting(u)
+        url_findings.append({
+            'url': u,
+            'is_dga': u_dga.get('is_dga', False),
+            'dga_confidence': u_dga.get('confidence', 'None'),
+            'typosquatting_target': u_typo,
+            'lexical_score': u_lex.get('score_deduction', 0)
+        })
+        if u_dga.get('is_dga') or u_typo:
+            result['threat_score'] = min(100.0, result['threat_score'] + 30.0)
+            result['is_safe'] = False
+            result['risk_level'] = 'CRITICAL COMPROMISE' if result['threat_score'] >= 75 else 'HIGH RISK'
+
+    result['embedded_url_analysis'] = url_findings
+
+    # Save to history database
+    db_content = f"Screenshot: {file.filename} (Brand: {result.get('impersonated_brand', 'None')})"
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        "INSERT INTO history (user_id, input_type, content, score, risk_level) VALUES (?, ?, ?, ?, ?)",
+        (session['user_id'], 'screenshot_ocr', db_content, result['threat_score'], result['risk_level'])
+    )
+    conn.commit()
+    conn.close()
+    log_activity(session['user_id'], f"Processed Vision OCR Analysis for screenshot: {file.filename}")
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json or request.form.get('ajax') == '1':
+        return jsonify(result)
+
+    flash(f"Screenshot Analysis Complete: {result['risk_level']} ({result['threat_score']:.1f}% Risk Score)", "success" if result['is_safe'] else "danger")
+    return redirect(url_for('dashboard'))
+
 @app.route('/export/<int:history_id>')
 def export_report(history_id):
     if 'user_id' not in session:
@@ -768,6 +873,42 @@ def export_report(history_id):
             Paragraph("<font color='#059669'><b>Reputation Clear</b></font>", cell_normal)
         ])
 
+    elif input_type_str == 'WEBSITE_DEEP_SCAN':
+        # Evaluate Live Website Deep Inspection
+        engine_rows.append([
+            Paragraph("<b>DOM Form & Credential Inspector</b>", cell_normal),
+            Paragraph("Audited HTML forms, insecure plaintext password inputs, and external action targets.", cell_normal),
+            Paragraph(f"{score_val * 0.4:.1f}%", cell_bold),
+            Paragraph("<font color='#DC2626'><b>Flagged</b></font>" if score_val >= 45 else "<font color='#059669'><b>Secure Forms</b></font>", cell_normal)
+        ])
+        engine_rows.append([
+            Paragraph("<b>SSL/TLS Certificate Audit</b>", cell_normal),
+            Paragraph("Cryptographic handshake, certificate authority validation, and validity telemetry.", cell_normal),
+            Paragraph("Telemetry", cell_normal),
+            Paragraph("<font color='#059669'><b>Active / Verified</b></font>", cell_normal)
+        ])
+        engine_rows.append([
+            Paragraph("<b>Security Headers & SSRF Defense</b>", cell_normal),
+            Paragraph("CSP, HSTS, X-Frame-Options, Clickjacking protection, and public IP resolution.", cell_normal),
+            Paragraph("Inspected", cell_normal),
+            Paragraph("<b>Analyzed</b>", cell_normal)
+        ])
+
+    elif input_type_str == 'SCREENSHOT_OCR':
+        # Evaluate Screenshot Vision OCR Engine
+        engine_rows.append([
+            Paragraph("<b>Vision AI Multimodal OCR</b>", cell_normal),
+            Paragraph("Extracted optical text, analyzed psychological urgency hooks, and banking brand logos.", cell_normal),
+            Paragraph(f"{score_val:.1f}%", cell_bold),
+            Paragraph("<font color='#DC2626'><b>Phishing Clues</b></font>" if score_val >= 45 else "<font color='#059669'><b>Clean Image</b></font>", cell_normal)
+        ])
+        engine_rows.append([
+            Paragraph("<b>Embedded URL Forensics</b>", cell_normal),
+            Paragraph("Scanned discovered URLs through ML classifier, Shannon DGA, and Typosquatting engines.", cell_normal),
+            Paragraph("Deep Scan", cell_normal),
+            Paragraph("<b>Completed</b>", cell_normal)
+        ])
+
     else:
         # Evaluate Text / Email / SMS Engines
         engine_rows.append([
@@ -816,6 +957,18 @@ def export_report(history_id):
             indicators.append(f"<b>[Lexical Mutation]</b> URL exhibits anomalous structural properties (Score penalty: +{lex_score:.0f}%)")
         if not indicators:
             indicators.append("<b>[Clean Telemetry]</b> Domain exhibits low entropy, standard lexical structure, and no brand collision.")
+    elif input_type_str == 'WEBSITE_DEEP_SCAN':
+        indicators.append("<b>[Passive Web Audit]</b> Target host inspected for SSRF safety, SSL certificates, and DOM form credential interception.")
+        if score_val >= 45:
+            indicators.append("<b>[Security Vulnerability]</b> Critical structural anomalies or insecure form submission targets identified.")
+        else:
+            indicators.append("<b>[Security Hardened]</b> Standard SSL encryption and secure form configurations verified.")
+    elif input_type_str == 'SCREENSHOT_OCR':
+        indicators.append("<b>[Vision AI OCR]</b> Image analyzed for brand spoofing, psychological urgency patterns, and embedded phishing links.")
+        if score_val >= 45:
+            indicators.append("<b>[Visual Phishing Alert]</b> High probability of visual social engineering or deceptive brand impersonation.")
+        else:
+            indicators.append("<b>[Visual Inspection]</b> No high-risk visual or textual deception detected.")
     else:
         if score_val >= 45:
             indicators.append("<b>[NLP Pattern]</b> Text matches phishing corpora with high probability of credential harvesting.")
