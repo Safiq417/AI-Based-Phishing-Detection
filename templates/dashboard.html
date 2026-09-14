@@ -19,20 +19,20 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="lg:col-span-1 flex flex-col gap-6">
         <div class="card p-6 h-fit">
-            <div class="flex items-center justify-between mb-4 border-b pb-2">
-                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">Forensic Threat Scanner</h3>
-                <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">v2.0 Pro</span>
+            <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Forensic Threat Scanner</h3>
+                <span class="text-[0.65rem] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">v2.0 Pro</span>
             </div>
 
             <!-- 3-Tab Glassmorphic Mode Switcher -->
-            <div class="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl mb-5 border border-slate-200/60 dark:border-slate-800">
+            <div class="flex p-1 bg-slate-100/90 dark:bg-slate-900/90 rounded-2xl mb-5 border border-slate-200 dark:border-slate-800">
                 <button id="tabBtnQuick" onclick="switchScanTab('quick')" type="button" class="flex-1 py-2 text-xs font-bold rounded-xl transition shadow-sm bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400">
                     🔗 Quick
                 </button>
-                <button id="tabBtnWebsite" onclick="switchScanTab('website')" type="button" class="flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
+                <button id="tabBtnWebsite" onclick="switchScanTab('website')" type="button" class="flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
                     🌐 Web Inspector
                 </button>
-                <button id="tabBtnScreenshot" onclick="switchScanTab('screenshot')" type="button" class="flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
+                <button id="tabBtnScreenshot" onclick="switchScanTab('screenshot')" type="button" class="flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
                     📸 Screenshot OCR
                 </button>
             </div>
@@ -41,10 +41,10 @@
             <div id="tabContentQuick" class="space-y-4">
                 <form action="{{ url_for('dashboard') }}" method="POST" class="space-y-4" onsubmit="return validatePayload()">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1" for="payloadTypeButton">Payload Type</label>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5" for="payloadTypeButton">Payload Type</label>
                         <div class="relative">
                             <button id="payloadTypeButton" type="button" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="payloadTypeLabel" class="input-field payload-select-button flex w-full items-center justify-between pr-3 text-left bg-white dark:bg-slate-950">
-                                <span id="payloadTypeLabel" class="truncate payload-select-label">Email / SMS Content</span>
+                                <span id="payloadTypeLabel" class="truncate payload-select-label font-medium">Email / SMS Content</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4 text-slate-500 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
@@ -60,10 +60,10 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Data</label>
-                        <textarea name="content" rows="5" required class="input-field text-sm" placeholder="Paste message text, domain (e.g. example.com), or full URL here..."></textarea>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">Target Data</label>
+                        <textarea name="content" rows="4" required class="input-field text-sm" placeholder="Paste message text, domain (e.g. example.com), or full URL here..."></textarea>
                     </div>
-                    <button type="submit" class="btn-primary w-full">Analyze Threat</button>
+                    <button type="submit" class="btn-primary w-full shadow-lg shadow-blue-500/25">Analyze Threat</button>
                 </form>
             </div>
 
@@ -71,14 +71,14 @@
             <div id="tabContentWebsite" class="hidden space-y-4">
                 <form id="websiteScanForm" onsubmit="submitWebsiteScan(event)" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Website URL</label>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">Target Website URL</label>
                         <input type="text" id="websiteUrlInput" name="url" required class="input-field text-sm" placeholder="e.g. sbi.co.in or https://target-bank.com">
-                        <div class="flex items-center gap-1.5 mt-2 text-[0.7rem] text-slate-400">
-                            <span class="text-emerald-500">🛡️</span>
-                            <span>Passive GET, SSL handshake, form credential audit &amp; SSRF protected.</span>
+                        <div class="flex items-center gap-1.5 mt-2 text-[0.72rem] text-slate-500 dark:text-slate-400">
+                            <span class="text-emerald-500 font-bold">🛡️ Passive Safe Mode</span>
+                            <span>• SSL handshake &amp; SSRF protected</span>
                         </div>
                     </div>
-                    <button type="submit" id="websiteScanBtn" class="btn-primary flex items-center justify-center gap-2 w-full">
+                    <button type="submit" id="websiteScanBtn" class="btn-primary flex items-center justify-center gap-2 w-full shadow-lg shadow-blue-500/25">
                         <span id="webBtnText">Deep Inspect Website</span>
                         <span id="webBtnSpinner" class="hidden animate-spin">⏳</span>
                     </button>
@@ -88,19 +88,19 @@
             <!-- TAB 3: SCREENSHOT & OCR THREAT ANALYZER -->
             <div id="tabContentScreenshot" class="hidden space-y-4">
                 <form id="screenshotScanForm" onsubmit="submitScreenshotScan(event)" class="space-y-4" enctype="multipart/form-data">
-                    <div id="dropZone" onclick="document.getElementById('screenshotFileInput').click()" class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-6 text-center cursor-pointer hover:border-blue-500 transition bg-slate-50/50 dark:bg-slate-900/50">
+                    <div id="dropZone" onclick="document.getElementById('screenshotFileInput').click()" class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 rounded-2xl p-6 text-center cursor-pointer transition bg-slate-50/80 dark:bg-slate-900/60 hover:bg-blue-50/30">
                         <input type="file" id="screenshotFileInput" name="screenshot" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
                         <div id="dropZonePrompt">
-                            <div class="text-3xl mb-1">📸</div>
-                            <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Drop screenshot here or <span class="text-blue-500 underline">Browse</span></p>
-                            <p class="text-[0.65rem] text-slate-400 mt-1">PNG, JPG, WEBP (SMS, Email, Login screen, QR code)</p>
+                            <div class="text-3xl mb-1.5">📸</div>
+                            <p class="text-sm font-bold text-slate-800 dark:text-slate-100">Drop screenshot here or <span class="text-blue-600 dark:text-blue-400 underline">Browse</span></p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">PNG, JPG, WEBP (SMS, Email, Login screen, QR code)</p>
                         </div>
                         <div id="imagePreviewContainer" class="hidden relative mt-2">
-                            <img id="imagePreview" class="max-h-40 mx-auto rounded-xl shadow-md border border-slate-700/60 object-contain">
+                            <img id="imagePreview" class="max-h-40 mx-auto rounded-xl shadow-md border border-slate-200 dark:border-slate-700 object-contain">
                             <button type="button" onclick="clearSelectedImage(event)" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full h-6 w-6 text-xs flex items-center justify-center shadow hover:bg-red-500">✕</button>
                         </div>
                     </div>
-                    <button type="submit" id="screenshotScanBtn" class="btn-primary flex items-center justify-center gap-2 w-full opacity-50 cursor-not-allowed" disabled>
+                    <button type="submit" id="screenshotScanBtn" class="btn-primary flex items-center justify-center gap-2 w-full opacity-50 cursor-not-allowed shadow-lg shadow-blue-500/25" disabled>
                         <span id="ssBtnText">Analyze Screenshot with AI</span>
                         <span id="ssBtnSpinner" class="hidden animate-spin">⏳</span>
                     </button>
@@ -134,38 +134,38 @@
     </div>
 
     <div class="lg:col-span-2 card p-0 overflow-hidden">
-        <div class="p-5 border-b border-slate-100 bg-slate-50">
-            <h3 class="text-lg font-bold text-slate-800">Recent Detection History</h3>
+        <div class="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80">
+            <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Recent Detection History</h3>
         </div>
         <div class="overflow-x-auto p-5">
             <table class="w-full text-left text-sm">
                 <thead>
-                    <tr class="text-slate-500 uppercase text-xs tracking-wider border-b border-slate-200">
-                        <th class="pb-3 font-semibold">Type</th>
-                        <th class="pb-3 font-semibold">Excerpt</th>
-                        <th class="pb-3 font-semibold">AI Score</th>
-                        <th class="pb-3 font-semibold">Classification</th>
-                        <th class="pb-3 font-semibold">Report</th>
+                    <tr class="text-slate-500 dark:text-slate-400 uppercase text-xs tracking-wider border-b border-slate-200 dark:border-slate-800">
+                        <th class="pb-3 font-bold">Type</th>
+                        <th class="pb-3 font-bold">Excerpt</th>
+                        <th class="pb-3 font-bold">AI Score</th>
+                        <th class="pb-3 font-bold">Classification</th>
+                        <th class="pb-3 font-bold">Report</th>
                     </tr>
                 </thead>
-                <tbody class="text-slate-700">
+                <tbody class="text-slate-700 dark:text-slate-200">
                     {% for row in history %}
-                    <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
-                        <td class="py-3 uppercase font-semibold text-xs text-slate-500">{{ row[2] }}</td>
+                    <tr class="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                        <td class="py-3 uppercase font-semibold text-xs text-slate-500 dark:text-slate-400">{{ row[2] }}</td>
                         <td class="py-3 truncate max-w-[200px]" title="{{ row[3] }}">{{ row[3] }}</td>
-                        <td class="py-3 font-semibold text-slate-800">{{ "%.1f"|format(row[4]) }}%</td>
+                        <td class="py-3 font-bold text-slate-900 dark:text-slate-100">{{ "%.1f"|format(row[4]) }}%</td>
                         <td class="py-3">
                             <span class="px-2.5 py-1 rounded-full text-xs font-bold 
-                            {% if row[5] == 'Safe' %} bg-green-100 text-green-700
-                            {% elif row[5] == 'Low Risk' %} bg-blue-100 text-blue-700
-                            {% elif row[5] == 'Medium Risk' %} bg-yellow-100 text-yellow-700
-                            {% else %} bg-red-100 text-red-700 {% endif %}">
+                            {% if row[5] == 'Safe' %} bg-green-100 text-green-700 dark:bg-green-900/60 dark:text-green-300
+                            {% elif row[5] == 'Low Risk' %} bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300
+                            {% elif row[5] == 'Medium Risk' %} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/60 dark:text-yellow-300
+                            {% else %} bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300 {% endif %}">
                                 {{ row[5] }}
                             </span>
                         </td>
                         <td class="py-3 flex gap-3">
-    <a href="{{ url_for('export_report', history_id=row[0]) }}" class="text-blue-600 font-medium hover:underline text-xs">PDF</a>
-    <a href="{{ url_for('delete_history', id=row[0]) }}" class="text-red-500 font-medium hover:underline text-xs" onclick="return confirm('Delete this scan?')">Delete</a>
+    <a href="{{ url_for('export_report', history_id=row[0]) }}" class="text-blue-600 dark:text-blue-400 font-semibold hover:underline text-xs">PDF</a>
+    <a href="{{ url_for('delete_history', id=row[0]) }}" class="text-red-500 dark:text-red-400 font-semibold hover:underline text-xs" onclick="return confirm('Delete this scan?')">Delete</a>
 </td>
                     </tr>
                     {% endfor %}
@@ -175,43 +175,58 @@
     </div>
 </div>
 
-<div id="phishshieldChatWidget" class="fixed right-4 bottom-4 z-50 flex flex-col items-end sm:right-6 sm:bottom-6">
-    <button id="chatToggleBtn" type="button" aria-expanded="false" aria-controls="chatPanel" class="group inline-flex items-center gap-2.5 rounded-full bg-slate-900/90 dark:bg-slate-100/95 backdrop-blur-xl px-4 py-3 text-sm font-semibold text-white dark:text-slate-900 shadow-xl shadow-blue-500/10 ring-1 ring-white/20 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500">
+<!-- Draggable AI Chatbot Widget -->
+<div id="phishshieldChatWidget" class="fixed right-4 bottom-4 z-50 flex flex-col items-end sm:right-6 sm:bottom-6 select-none" style="touch-action: none;">
+    <button id="chatToggleBtn" type="button" aria-expanded="false" aria-controls="chatPanel" class="group inline-flex items-center gap-2 rounded-full bg-slate-900 dark:bg-slate-100 px-4 py-3 text-sm font-bold text-white dark:text-slate-900 shadow-2xl shadow-blue-500/20 ring-1 ring-white/20 transition-transform duration-200 hover:scale-105 active:scale-95 cursor-grab active:cursor-grabbing">
+        <span class="text-xs text-slate-400 dark:text-slate-500 select-none mr-0.5">⠿</span>
         <span>PhishShield AI</span>
-        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white transition-transform duration-300 group-hover:rotate-12">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M8 10h.01M12 10h.01M16 10h.01" />
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
         </span>
     </button>
 
-    <div id="chatPanel" class="mt-3 hidden w-full min-w-[320px] max-w-sm rounded-[1.5rem] border border-white/40 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl shadow-2xl shadow-slate-900/20 ring-1 ring-black/5 dark:ring-white/10 sm:max-w-md overflow-hidden transition-all duration-300">
-        <div class="flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-950/50 px-5 py-3.5 text-sm font-semibold text-slate-900 dark:text-slate-100">
+    <div id="chatPanel" class="mt-3 hidden w-[350px] max-w-[92vw] rounded-[1.5rem] border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl shadow-2xl shadow-slate-900/25 ring-1 ring-black/5 dark:ring-white/10 overflow-hidden transition-all duration-200 flex flex-col select-text">
+        <!-- Header (Drag Handle) -->
+        <div id="chatPanelHeader" class="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/80 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 cursor-grab active:cursor-grabbing">
             <div class="flex items-center gap-2">
+                <span class="text-slate-400 text-xs">⠿</span>
                 <span class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>PhishShield AI Assistant</span>
             </div>
-            <button id="chatCloseBtn" type="button" aria-label="Close chat" class="text-slate-400 transition hover:text-slate-900 dark:hover:text-slate-100 p-1">✕</button>
+            <button id="chatCloseBtn" type="button" aria-label="Close chat" class="text-slate-400 transition hover:text-slate-900 dark:hover:text-slate-100 p-1 text-base font-bold">✕</button>
         </div>
-        <div id="chatMessages" class="min-h-[240px] max-h-80 space-y-3 overflow-y-auto bg-transparent px-4 py-4 text-sm text-slate-800 dark:text-slate-100">
-            <div class="rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-md px-4 py-3 text-slate-700 dark:text-slate-200 border border-slate-200/50 dark:border-slate-700/50 shadow-sm">
-                <p class="whitespace-pre-wrap text-sm leading-relaxed">Ask me about your latest URL analysis, phishing risk, or cybersecurity best practices.</p>
+
+        <!-- Quick Prompts Suggestions Bar -->
+        <div class="flex items-center gap-1.5 px-3 py-2 bg-slate-100/60 dark:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50 overflow-x-auto text-[0.72rem] no-scrollbar">
+            <button type="button" onclick="sendQuickPrompt('Is my last scanned URL safe?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-500 hover:text-blue-600 transition shadow-xs">🛡️ Is URL Safe?</button>
+            <button type="button" onclick="sendQuickPrompt('How to spot a fake login page?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-500 hover:text-blue-600 transition shadow-xs">🔍 Spot Fake Sites</button>
+            <button type="button" onclick="sendQuickPrompt('Explain phishing risk indicators')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-500 hover:text-blue-600 transition shadow-xs">⚠️ Threat Tips</button>
+        </div>
+
+        <!-- Chat Messages -->
+        <div id="chatMessages" class="h-[280px] max-h-[320px] space-y-3 overflow-y-auto px-4 py-3 text-sm text-slate-800 dark:text-slate-100">
+            <div class="rounded-2xl bg-slate-100/90 dark:bg-slate-800/90 px-4 py-3 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 shadow-xs">
+                <p class="whitespace-pre-wrap text-xs leading-relaxed">👋 Hi! Ask me anything about your scanned URLs, threat indicators, or security advice.</p>
             </div>
         </div>
-        <div class="border-t border-slate-200/50 dark:border-slate-800/50 bg-slate-50/40 dark:bg-slate-950/40 px-4 py-3">
+
+        <!-- Chat Input & Controls -->
+        <div class="border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 px-3.5 py-2.5">
             <div class="flex items-center gap-2">
-                <textarea id="chatInput" rows="1" placeholder="Ask about phishing, URL analysis, or security..." class="input-field chat-input-textarea min-h-[44px] max-h-[160px] w-full min-w-0 flex-1 resize-none rounded-2xl px-4 text-sm leading-[1.45] placeholder-slate-500 text-slate-900 dark:placeholder-slate-400 dark:bg-slate-900/60 dark:text-slate-100 box-border overflow-y-hidden" aria-label="Chat message"></textarea>
-                <button id="chatSendBtn" type="button" class="chat-send-button inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-500/25 transition-transform duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400" aria-label="Send message">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <textarea id="chatInput" rows="1" placeholder="Ask AI assistant..." class="input-field chat-input-textarea min-h-[42px] max-h-[120px] w-full min-w-0 flex-1 resize-none rounded-xl px-3.5 py-2 text-xs leading-relaxed placeholder-slate-400 text-slate-900 dark:text-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" aria-label="Chat message"></textarea>
+                <button id="chatSendBtn" type="button" class="chat-send-button inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 transition-transform duration-150 hover:scale-105 active:scale-95 focus:outline-none" aria-label="Send message">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                     </svg>
                 </button>
             </div>
-            <div class="mt-2 flex items-center justify-between gap-2 text-[0.72rem] text-slate-500 dark:text-slate-400">
-                <span id="chatStatus" class="truncate">Ask me about analysis or security topics.</span>
-                <button id="chatClearBtn" type="button" class="shrink-0 font-medium text-slate-600 dark:text-slate-300 transition hover:text-slate-900 dark:hover:text-slate-100">Clear</button>
+            <div class="mt-1.5 flex items-center justify-between gap-2 text-[0.7rem] text-slate-500 dark:text-slate-400">
+                <span id="chatStatus" class="truncate">Ready to help 🛡️</span>
+                <button id="chatClearBtn" type="button" class="shrink-0 font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 transition">Clear</button>
             </div>
         </div>
     </div>
@@ -500,24 +515,26 @@
         `;
     }
 
-    // Draggable AI Chat Widget Implementation (Freely movable across screen)
+    // Draggable AI Chat Widget Implementation (Buttery smooth drag & drop)
+    let hasDraggedWidget = false;
+
     document.addEventListener('DOMContentLoaded', () => {
         const widget = document.getElementById('phishshieldChatWidget');
         const toggleBtn = document.getElementById('chatToggleBtn');
-        const chatHeader = document.getElementById('chatPanelHeader') || document.querySelector('#chatPanel > div:first-child');
+        const chatHeader = document.getElementById('chatPanelHeader');
         
         if (!widget || !toggleBtn) return;
 
         let isDragging = false;
         let startX, startY, initialLeft, initialTop;
-        let dragThresholdCrossed = false;
+        let dragDistance = 0;
 
-        function onPointerDown(e) {
-            // Ignore if clicking close or input
-            if (e.target.closest('#chatCloseBtn') || e.target.closest('input') || e.target.closest('textarea')) return;
+        function startDrag(e) {
+            if (e.target.closest('#chatCloseBtn') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('button:not(#chatToggleBtn)')) return;
             
             isDragging = true;
-            dragThresholdCrossed = false;
+            hasDraggedWidget = false;
+            dragDistance = 0;
             
             const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
             const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
@@ -529,34 +546,34 @@
             initialLeft = rect.left;
             initialTop = rect.top;
 
-            document.addEventListener('mousemove', onPointerMove);
-            document.addEventListener('mouseup', onPointerUp);
-            document.addEventListener('touchmove', onPointerMove, { passive: false });
-            document.addEventListener('touchend', onPointerUp);
+            widget.style.transition = 'none';
+
+            window.addEventListener('mousemove', moveDrag, { passive: false });
+            window.addEventListener('mouseup', endDrag);
+            window.addEventListener('touchmove', moveDrag, { passive: false });
+            window.addEventListener('touchend', endDrag);
         }
 
-        function onPointerMove(e) {
+        function moveDrag(e) {
             if (!isDragging) return;
             const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
             const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
 
             const dx = clientX - startX;
             const dy = clientY - startY;
+            dragDistance = Math.hypot(dx, dy);
 
-            if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-                dragThresholdCrossed = true;
+            if (dragDistance > 6) {
+                hasDraggedWidget = true;
                 if (e.cancelable) e.preventDefault();
-            }
 
-            if (dragThresholdCrossed) {
                 let newLeft = initialLeft + dx;
                 let newTop = initialTop + dy;
 
-                // Clamp within viewport
-                const maxLeft = window.innerWidth - widget.offsetWidth - 10;
-                const maxTop = window.innerHeight - widget.offsetHeight - 10;
-                newLeft = Math.max(10, Math.min(newLeft, maxLeft));
-                newTop = Math.max(10, Math.min(newTop, maxTop));
+                const maxLeft = window.innerWidth - widget.offsetWidth - 12;
+                const maxTop = window.innerHeight - widget.offsetHeight - 12;
+                newLeft = Math.max(12, Math.min(newLeft, maxLeft));
+                newTop = Math.max(12, Math.min(newTop, maxTop));
 
                 widget.style.left = `${newLeft}px`;
                 widget.style.top = `${newTop}px`;
@@ -565,21 +582,26 @@
             }
         }
 
-        function onPointerUp(e) {
+        function endDrag() {
             if (!isDragging) return;
             isDragging = false;
-            document.removeEventListener('mousemove', onPointerMove);
-            document.removeEventListener('mouseup', onPointerUp);
-            document.removeEventListener('touchmove', onPointerMove);
-            document.removeEventListener('touchend', onPointerUp);
+            widget.style.transition = '';
+            window.removeEventListener('mousemove', moveDrag);
+            window.removeEventListener('mouseup', endDrag);
+            window.removeEventListener('touchmove', moveDrag);
+            window.removeEventListener('touchend', endDrag);
+            
+            setTimeout(() => {
+                hasDraggedWidget = false;
+            }, 80);
         }
 
-        toggleBtn.addEventListener('mousedown', onPointerDown);
-        toggleBtn.addEventListener('touchstart', onPointerDown, { passive: true });
+        toggleBtn.addEventListener('mousedown', startDrag);
+        toggleBtn.addEventListener('touchstart', startDrag, { passive: true });
+        
         if (chatHeader) {
-            chatHeader.style.cursor = 'grab';
-            chatHeader.addEventListener('mousedown', onPointerDown);
-            chatHeader.addEventListener('touchstart', onPointerDown, { passive: true });
+            chatHeader.addEventListener('mousedown', startDrag);
+            chatHeader.addEventListener('touchstart', startDrag, { passive: true });
         }
     });
 </script>
@@ -816,50 +838,53 @@
         });
     });
 
+    function formatMessageText(text) {
+        if (!text) return '';
+        let formatted = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        // Bold **text**
+        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // Bullet points
+        formatted = formatted.replace(/^[•\-\*]\s+(.*)$/gm, '<li class="ml-3 list-disc">$1</li>');
+        // Backticks `code`
+        formatted = formatted.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-800 text-[0.85em] font-mono text-blue-600 dark:text-blue-400">$1</code>');
+        return formatted;
+    }
+
     function appendChatMessage(role, text, animate = true) {
         const chatMessages = document.getElementById('chatMessages');
         if (!chatMessages) return;
         const wrapper = document.createElement('div');
         wrapper.className = role === 'assistant'
-            ? 'chat-message-bubble chat-message-assistant rounded-3xl bg-slate-100 px-4 py-3 text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-100'
-            : 'chat-message-bubble chat-message-user rounded-3xl bg-blue-600 px-4 py-3 text-white shadow-sm';
+            ? 'chat-message-bubble chat-message-assistant rounded-2xl bg-slate-100 dark:bg-slate-800/90 px-4 py-2.5 text-slate-900 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700/60 shadow-xs'
+            : 'chat-message-bubble chat-message-user rounded-2xl bg-blue-600 px-4 py-2.5 text-white shadow-xs';
         if (animate) {
             wrapper.classList.add('chat-message-animate');
         }
-        wrapper.innerHTML = `<p class="whitespace-pre-wrap text-sm m-0">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+        wrapper.innerHTML = `<div class="whitespace-pre-wrap text-xs leading-relaxed">${formatMessageText(text)}</div>`;
         chatMessages.appendChild(wrapper);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
     
-    function typeChatMessage(role, fullText, speed = 15) {
-    const chatMessages = document.getElementById('chatMessages');
-    if (!chatMessages) return;
-    const wrapper = document.createElement('div');
-    wrapper.className = role === 'assistant'
-        ? 'chat-message-bubble chat-message-assistant rounded-3xl bg-slate-100 px-4 py-3 text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-100'
-        : 'chat-message-bubble chat-message-user rounded-3xl bg-blue-600 px-4 py-3 text-white shadow-sm';
-    wrapper.classList.add('chat-message-animate');
-    chatMessages.appendChild(wrapper);
-
-    const safeText = fullText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    let i = 0;
-    const interval = setInterval(() => {
-        i++;
-        wrapper.innerHTML = `<p class="whitespace-pre-wrap text-sm m-0">${safeText.slice(0, i)}</p>`;
+    function typeChatMessage(role, fullText) {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+        const wrapper = document.createElement('div');
+        wrapper.className = role === 'assistant'
+            ? 'chat-message-bubble chat-message-assistant rounded-2xl bg-slate-100 dark:bg-slate-800/90 px-4 py-2.5 text-slate-900 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700/60 shadow-xs chat-message-animate'
+            : 'chat-message-bubble chat-message-user rounded-2xl bg-blue-600 px-4 py-2.5 text-white shadow-xs chat-message-animate';
+        
+        wrapper.innerHTML = `<div class="whitespace-pre-wrap text-xs leading-relaxed">${formatMessageText(fullText)}</div>`;
+        chatMessages.appendChild(wrapper);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        if (i >= safeText.length) {
-            clearInterval(interval);
-        }
-    }, speed);
-}
+    }
 
     function showTypingIndicator() {
         const chatMessages = document.getElementById('chatMessages');
         if (!chatMessages) return null;
         const typingWrapper = document.createElement('div');
         typingWrapper.id = 'chatTypingIndicator';
-        typingWrapper.className = 'chat-message-bubble chat-message-assistant rounded-3xl bg-slate-100 px-4 py-3 text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-100 chat-message-animate';
-        typingWrapper.innerHTML = `<p class="whitespace-pre-wrap text-sm m-0">Typing...</p>`;
+        typingWrapper.className = 'chat-message-bubble chat-message-assistant rounded-2xl bg-slate-100 dark:bg-slate-800/80 px-4 py-2.5 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/50 shadow-xs chat-message-animate';
+        typingWrapper.innerHTML = `<div class="flex items-center gap-1.5 text-xs"><span>Analyzing</span><span class="animate-pulse">⚡...</span></div>`;
         chatMessages.appendChild(typingWrapper);
         chatMessages.scrollTop = chatMessages.scrollHeight;
         return typingWrapper;
@@ -874,8 +899,8 @@
 
     function resizeChatInput(input) {
         if (!input) return;
-        const minHeight = 44;
-        const maxHeight = 160;
+        const minHeight = 42;
+        const maxHeight = 120;
         input.style.height = 'auto';
         const targetHeight = Math.max(minHeight, Math.min(input.scrollHeight, maxHeight));
         input.style.height = `${targetHeight}px`;
@@ -884,11 +909,18 @@
 
     function resetChatInputHeight(input) {
         if (!input) return;
-        input.style.height = '44px';
+        input.style.height = '42px';
         input.style.overflowY = 'hidden';
     }
 
     let chatHistory = [];
+
+    function sendQuickPrompt(promptText) {
+        const input = document.getElementById('chatInput');
+        if (!input) return;
+        input.value = promptText;
+        sendChatMessage();
+    }
 
     async function sendChatMessage() {
         const input = document.getElementById('chatInput');
@@ -902,8 +934,8 @@
         appendChatMessage('user', message);
         input.value = '';
         resetChatInputHeight(input);
-        statusLabel.textContent = 'Typing...';
-        const typingIndicator = showTypingIndicator();
+        statusLabel.textContent = 'Analyzing... 🛡️';
+        showTypingIndicator();
 
         const contextPayload = {
             history: chatHistory.slice(-8),
@@ -924,17 +956,17 @@
             if (!response.ok || result.error) {
                 const errorText = result.error || 'Unable to reach AI assistant.';
                 appendChatMessage('assistant', errorText);
-                statusLabel.textContent = 'AI assistant error.';
+                statusLabel.textContent = 'AI error occurred.';
                 return;
             }
 
             const assistantReply = result.reply || 'No reply received.';
             typeChatMessage('assistant', assistantReply);
             chatHistory = result.history || [...chatHistory, { role: 'user', content: message }, { role: 'assistant', content: assistantReply }];
-            statusLabel.textContent = 'Ready for another question.';
+            statusLabel.textContent = 'Ready for another question 💡';
         } catch (error) {
             removeTypingIndicator();
-            appendChatMessage('assistant', 'Network error while contacting AI service.');
+            appendChatMessage('assistant', '⚠️ Network error while contacting AI service.');
             statusLabel.textContent = 'Network error.';
         }
     }
@@ -949,10 +981,16 @@
         const statusLabel = document.getElementById('chatStatus');
 
         if (chatToggleBtn && chatPanel) {
-            chatToggleBtn.addEventListener('click', function() {
+            chatToggleBtn.addEventListener('click', function(e) {
+                if (hasDraggedWidget) {
+                    return;
+                }
                 const isOpen = !chatPanel.classList.contains('hidden');
                 chatPanel.classList.toggle('hidden');
                 chatToggleBtn.setAttribute('aria-expanded', String(!isOpen));
+                if (!isOpen && chatInput) {
+                    setTimeout(() => chatInput.focus(), 150);
+                }
             });
         }
 
@@ -992,13 +1030,13 @@
                 const chatMessages = document.getElementById('chatMessages');
                 if (chatMessages) {
                     chatMessages.innerHTML = `
-                        <div class="rounded-3xl bg-slate-100 px-4 py-3 text-slate-700 shadow-sm dark:bg-slate-800 dark:text-slate-200">
-                            <p class="whitespace-pre-wrap text-sm">Ask me about your latest URL analysis, phishing risk, or cybersecurity best practices.</p>
+                        <div class="rounded-2xl bg-slate-100/90 dark:bg-slate-800/90 px-4 py-3 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 shadow-xs">
+                            <p class="whitespace-pre-wrap text-xs leading-relaxed">👋 Hi! Ask me anything about your scanned URLs, threat indicators, or security advice.</p>
                         </div>
                     `;
                 }
                 if (statusLabel) {
-                    statusLabel.textContent = 'Chat cleared.';
+                    statusLabel.textContent = 'Chat cleared 🛡️';
                 }
                 if (chatInput) {
                     chatInput.value = '';
