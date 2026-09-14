@@ -308,7 +308,7 @@ def analyze_text_with_ai(content):
         else:
             endpoint = os.environ.get('GROQ_API_URL', 'https://api.groq.com/openai/v1/chat/completions')
             user_model = os.environ.get('GROQ_MODEL')
-            candidate_models = [user_model] if user_model else ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768']
+            candidate_models = [user_model] if user_model else ['openai/gpt-oss-120b', 'qwen/qwen3.6-27b', 'groq/compound', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b']
 
         for model_name in candidate_models:
             payload = {
@@ -1188,7 +1188,7 @@ def ai_chat():
     else:
         endpoint = os.environ.get('GROQ_API_URL', 'https://api.groq.com/openai/v1/chat/completions')
         user_model = os.environ.get('GROQ_MODEL')
-        candidate_models = [user_model] if user_model else ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768']
+        candidate_models = [user_model] if user_model else ['openai/gpt-oss-120b', 'qwen/qwen3.6-27b', 'groq/compound', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b']
 
     headers = {
         'Authorization': f'Bearer {api_key.strip()}',
