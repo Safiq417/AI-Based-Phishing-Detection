@@ -61,6 +61,8 @@ def get_vision_api_key():
                         v = v.strip().strip('"\'')
                         if k and v:
                             os.environ[k] = v
+        except Exception:
+            pass
     return os.environ.get('PhishShield_Vision_OCR') or os.environ.get('VISION_API_KEY') or os.environ.get('GROQ_VISION_KEY') or os.environ.get('GROQ_API_KEY') or os.environ.get('GROK_API_KEY') or os.environ.get('XAI_API_KEY') or ''
 
 def call_groq_vision_api(base64_image, groq_api_key):
