@@ -367,37 +367,37 @@
                 id: 'scene1',
                 duration: 9000,
                 narrationEn: "Welcome to PhishShield AI Enterprise — an intelligent cybersecurity and URL risk analysis platform designed by Safiq Ansari and team to detect next-generation phishing threats.",
-                narrationHi: "Welcome to PhishShield AI Enterprise — yeh ek intelligent cyber defense platform hai jo advanced machine learning aur entropy analysis se phishing threats ko detect karta hai."
+                narrationHi: "PhishShield AI एंटरप्राइज में आपका स्वागत है। यह एक इंटेलिजेंट साइबर सिक्योरिटी प्लेटफॉर्म है जिसे सफीक अंसारी और उनकी टीम ने एडवांस फिशिंग थ्रेट्स को डिटेक्ट करने के लिए डिज़ाइन किया है।"
             },
             {
                 id: 'scene2',
                 duration: 9000,
                 narrationEn: "Modern cyber attackers use sophisticated techniques like credential harvesting SMS, typosquatting brand domains, and automated DGA botnet generation to bypass traditional security filters.",
-                narrationHi: "Aajkal ke attackers fake bank SMS, brand impersonation, aur algorithmically generated DGA botnet domains se traditional firewalls ko bypass kar dete hain."
+                narrationHi: "आजकल के साइबर अटैकर्स फेक बैंक SMS, ब्रांड इंपर्सोनेशन, और ऑटोमेटेड DGA बॉटनेट डोमेन्स का इस्तेमाल करके पुराने सिक्योरिटी फिल्टर्स को आसानी से बायपास कर देते हैं।"
             },
             {
                 id: 'scene3',
                 duration: 10000,
                 narrationEn: "To solve this, PhishShield AI deploys a 4-tier hybrid defense architecture combining NLP Naive Bayes classification, Shannon Entropy DGA analysis, Levenshtein brand distance, and VirusTotal intelligence.",
-                narrationHi: "Is threat ko neutralise karne ke liye PhishShield AI 4-tier hybrid pipeline use karta hai: NLP machine learning, Shannon entropy DGA botnet detection, aur VirusTotal threat intelligence."
+                narrationHi: "इस प्रॉब्लम को सॉल्व करने के लिए PhishShield AI 4-टियर हाइब्रिड डिफेंस आर्किटेक्चर यूज़ करता है, जिसमे मशीन लर्निंग, शैनन एंट्रोपी DGA एनालिसिस और वायरस-टोटल थ्रेट इंटेलिजेंस शामिल हैं।"
             },
             {
                 id: 'scene4',
                 duration: 10000,
                 narrationEn: "Here in our live simulation, an active DGA botnet URL is instantly inspected. The system calculates high Shannon entropy of 3.585 and flags it as a 95% Critical Compromise Threat in under one millisecond.",
-                narrationHi: "Live simulation me system ne suspicious botnet URL ko inspect kiya, high Shannon entropy detect ki, aur instantly 95% Critical Threat score assign kar diya."
+                narrationHi: "यहाँ लाइव सिमुलेशन में, सिस्टम ने एक सस्पिशियस बॉटनेट URL को इंस्पेक्ट किया, हाई शैनन एंट्रोपी डिटेक्ट की, और एक मिलीसेकंड में इसे 95% क्रिटिकल थ्रेट स्कोर असाइन कर दिया।"
             },
             {
                 id: 'scene5',
                 duration: 9000,
                 narrationEn: "For enterprise governance, SOC analysts can export detailed forensic PDF reports featuring complete multi-engine score differentiation, brand logo, and actionable remediation directives.",
-                narrationHi: "Security audits aur compliance ke liye SOC analysts one-click me detailed PDF forensic report download kar sakte hain, jisme har engine ka alag score explain hota hai."
+                narrationHi: "सिक्योरिटी ऑडिट्स और कंप्लायंस के लिए SOC एनालिस्ट्स वन-क्लिक में डिटेल्ड PDF फॉरेंसिक रिपोर्ट डाउनलोड कर सकते हैं, जिसमे हर इंजन का अलग स्कोर और रेमेडिएशन डिटेल्स होती हैं।"
             },
             {
                 id: 'scene6',
                 duration: 8000,
                 narrationEn: "With lightning-fast analysis, high accuracy, and an Apple-inspired glassmorphism interface, PhishShield AI is enterprise-ready for immediate cybersecurity deployment.",
-                narrationHi: "Fast latency, high precision, aur Apple-style glassmorphism interface ke sath, PhishShield AI kisi bhi organization me deploy karne ke liye fully ready hai."
+                narrationHi: "फास्ट लेटेंसी, हाई एक्यूरेसी, और मॉडर्न ग्लासमॉर्फिज्म इंटरफ़ेस के साथ, PhishShield AI किसी भी ऑर्गेनाइजेशन में डिप्लॉय करने के लिए पूरी तरह से रेडी है।"
             }
         ];
 
@@ -422,9 +422,12 @@
             // Try to pick suitable voice
             const voices = synth.getVoices();
             if (currentLang === 'hi') {
-                const hindiVoice = voices.find(v => v.lang.includes('hi') || v.lang.includes('IN'));
+                currentUtterance.lang = 'hi-IN'; // Force Hindi language engine
+                // Prefer exact Hindi voice, fallback to Indian English if Hindi is missing
+                const hindiVoice = voices.find(v => v.lang.toLowerCase().includes('hi-in') || v.lang.toLowerCase() === 'hi') || voices.find(v => v.lang.includes('IN'));
                 if (hindiVoice) currentUtterance.voice = hindiVoice;
             } else {
+                currentUtterance.lang = 'en-US';
                 const enVoice = voices.find(v => (v.lang.includes('en-US') || v.lang.includes('en-GB')) && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Microsoft')));
                 if (enVoice) currentUtterance.voice = enVoice;
             }
