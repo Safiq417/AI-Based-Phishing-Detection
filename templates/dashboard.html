@@ -176,59 +176,58 @@
     </div>
 </div>
 
-<!-- Draggable AI Chatbot Widget -->
-<div id="phishshieldChatWidget" class="fixed right-4 bottom-4 z-50 flex flex-col items-end sm:right-6 sm:bottom-6 select-none" style="touch-action: none;">
-    <button id="chatToggleBtn" type="button" aria-expanded="false" aria-controls="chatPanel" class="group inline-flex items-center gap-2 rounded-full bg-slate-900 dark:bg-slate-100 px-4 py-3 text-sm font-bold text-white dark:text-slate-900 shadow-2xl shadow-blue-500/20 ring-1 ring-white/20 transition-transform duration-200 hover:scale-105 active:scale-95 cursor-grab active:cursor-grabbing">
-        <span class="text-xs text-slate-400 dark:text-slate-500 select-none mr-0.5">⠿</span>
-        <span>PhishShield AI</span>
-        <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 10h.01M12 10h.01M16 10h.01" />
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-        </span>
-    </button>
+<!-- Floating AI Toggle Button (Fully draggable anywhere, 1:1 cursor sync) -->
+<div id="chatToggleBtn" class="fixed right-6 bottom-6 z-50 inline-flex items-center gap-2 rounded-full bg-slate-900 dark:bg-slate-100 px-4 py-3 text-sm font-bold text-white dark:text-slate-900 shadow-2xl shadow-blue-500/25 ring-1 ring-white/20 cursor-grab active:cursor-grabbing select-none" style="touch-action: none;">
+    <span class="text-xs text-slate-400 dark:text-slate-500 mr-0.5">⠿</span>
+    <span>PhishShield AI</span>
+    <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 10h.01M12 10h.01M16 10h.01" />
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+    </span>
+</div>
 
-    <div id="chatPanel" class="mt-3 hidden w-[350px] max-w-[92vw] rounded-[1.5rem] border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl shadow-2xl shadow-slate-900/25 ring-1 ring-black/5 dark:ring-white/10 overflow-hidden transition-all duration-200 flex flex-col select-text">
-        <!-- Header (Drag Handle) -->
-        <div id="chatPanelHeader" class="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/80 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 cursor-grab active:cursor-grabbing">
-            <div class="flex items-center gap-2">
-                <span class="text-slate-400 text-xs">⠿</span>
-                <span class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>PhishShield AI Assistant</span>
-            </div>
-            <button id="chatCloseBtn" type="button" aria-label="Close chat" class="text-slate-400 transition hover:text-slate-900 dark:hover:text-slate-100 p-1 text-base font-bold">✕</button>
+<!-- Standalone Chat Window (Smart viewport clamping, movable via header) -->
+<div id="chatPanel" class="fixed z-50 hidden w-[360px] max-w-[94vw] rounded-[1.5rem] border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl shadow-2xl shadow-slate-900/30 ring-1 ring-black/5 dark:ring-white/10 overflow-hidden flex flex-col select-text" style="touch-action: none;">
+    <!-- Header (Drag Handle) -->
+    <div id="chatPanelHeader" class="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/80 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 cursor-grab active:cursor-grabbing select-none">
+        <div class="flex items-center gap-2">
+            <span class="text-slate-400 text-xs">⠿</span>
+            <span class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>PhishShield AI Assistant</span>
         </div>
+        <button id="chatCloseBtn" type="button" aria-label="Close chat" class="text-slate-400 transition hover:text-slate-900 dark:hover:text-slate-100 p-1 text-base font-bold">✕</button>
+    </div>
 
-        <!-- Quick Prompts Suggestions Bar -->
-        <div class="flex items-center gap-1.5 px-3 py-2 bg-slate-100/60 dark:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50 overflow-x-auto text-[0.72rem] no-scrollbar">
-            <button type="button" onclick="sendQuickPrompt('Is my last scanned URL safe?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-500 hover:text-blue-600 transition shadow-xs">🛡️ Is URL Safe?</button>
-            <button type="button" onclick="sendQuickPrompt('How to spot a fake login page?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-500 hover:text-blue-600 transition shadow-xs">🔍 Spot Fake Sites</button>
-            <button type="button" onclick="sendQuickPrompt('Explain phishing risk indicators')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-500 hover:text-blue-600 transition shadow-xs">⚠️ Threat Tips</button>
+    <!-- Quick Prompts Suggestions Bar -->
+    <div class="flex items-center gap-1.5 px-3 py-2 bg-slate-100/60 dark:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50 overflow-x-auto text-[0.72rem] no-scrollbar">
+        <button type="button" onclick="sendQuickPrompt('Is my last scanned URL safe?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-500 hover:text-blue-600 transition shadow-xs">🛡️ Is URL Safe?</button>
+        <button type="button" onclick="sendQuickPrompt('How to spot a fake login page?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-500 hover:text-blue-600 transition shadow-xs">🔍 Spot Fake Sites</button>
+        <button type="button" onclick="sendQuickPrompt('Explain phishing risk indicators')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-500 hover:text-blue-600 transition shadow-xs">⚠️ Threat Tips</button>
+    </div>
+
+    <!-- Chat Messages -->
+    <div id="chatMessages" class="h-[270px] max-h-[300px] space-y-3 overflow-y-auto px-4 py-3 text-sm text-slate-800 dark:text-slate-100">
+        <div class="rounded-2xl bg-slate-100/90 dark:bg-slate-800/90 px-4 py-3 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 shadow-xs">
+            <p class="whitespace-pre-wrap text-xs leading-relaxed">👋 Hi! Ask me anything about your scanned URLs, threat indicators, or security advice.</p>
         </div>
+    </div>
 
-        <!-- Chat Messages -->
-        <div id="chatMessages" class="h-[280px] max-h-[320px] space-y-3 overflow-y-auto px-4 py-3 text-sm text-slate-800 dark:text-slate-100">
-            <div class="rounded-2xl bg-slate-100/90 dark:bg-slate-800/90 px-4 py-3 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 shadow-xs">
-                <p class="whitespace-pre-wrap text-xs leading-relaxed">👋 Hi! Ask me anything about your scanned URLs, threat indicators, or security advice.</p>
-            </div>
+    <!-- Chat Input & Controls -->
+    <div class="border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 px-3.5 py-2.5">
+        <div class="flex items-center gap-2">
+            <textarea id="chatInput" rows="1" placeholder="Ask AI assistant..." class="input-field chat-input-textarea min-h-[42px] max-h-[120px] w-full min-w-0 flex-1 resize-none rounded-xl px-3.5 py-2 text-xs leading-relaxed placeholder-slate-400 text-slate-900 dark:text-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" aria-label="Chat message"></textarea>
+            <button id="chatSendBtn" type="button" class="chat-send-button inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 transition-transform duration-150 hover:scale-105 active:scale-95 focus:outline-none" aria-label="Send message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
         </div>
-
-        <!-- Chat Input & Controls -->
-        <div class="border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 px-3.5 py-2.5">
-            <div class="flex items-center gap-2">
-                <textarea id="chatInput" rows="1" placeholder="Ask AI assistant..." class="input-field chat-input-textarea min-h-[42px] max-h-[120px] w-full min-w-0 flex-1 resize-none rounded-xl px-3.5 py-2 text-xs leading-relaxed placeholder-slate-400 text-slate-900 dark:text-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" aria-label="Chat message"></textarea>
-                <button id="chatSendBtn" type="button" class="chat-send-button inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 transition-transform duration-150 hover:scale-105 active:scale-95 focus:outline-none" aria-label="Send message">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="22" y1="2" x2="11" y2="13"></line>
-                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                    </svg>
-                </button>
-            </div>
-            <div class="mt-1.5 flex items-center justify-between gap-2 text-[0.7rem] text-slate-500 dark:text-slate-400">
-                <span id="chatStatus" class="truncate">Ready to help 🛡️</span>
-                <button id="chatClearBtn" type="button" class="shrink-0 font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 transition">Clear</button>
-            </div>
+        <div class="mt-1.5 flex items-center justify-between gap-2 text-[0.7rem] text-slate-500 dark:text-slate-400">
+            <span id="chatStatus" class="truncate">Ready to help 🛡️</span>
+            <button id="chatClearBtn" type="button" class="shrink-0 font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 transition">Clear</button>
         </div>
     </div>
 </div>
@@ -534,93 +533,131 @@
         updateDashboardWithNewScan(data);
     }
 
-    // Draggable AI Chat Widget Implementation (Buttery smooth drag & drop)
+    // Draggable AI Chat Widget Implementation (1:1 Exact Cursor Tracking & Smart Clamping)
     let hasDraggedWidget = false;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const widget = document.getElementById('phishshieldChatWidget');
+    function positionChatPanel() {
         const toggleBtn = document.getElementById('chatToggleBtn');
-        const chatHeader = document.getElementById('chatPanelHeader');
-        
-        if (!widget || !toggleBtn) return;
+        const chatPanel = document.getElementById('chatPanel');
+        if (!toggleBtn || !chatPanel) return;
+
+        const btnRect = toggleBtn.getBoundingClientRect();
+        const panelWidth = Math.min(360, window.innerWidth - 24);
+        const panelHeight = Math.min(480, window.innerHeight - 24);
+
+        // Calculate preferred position: above the toggle button, aligned to its right
+        let targetLeft = btnRect.right - panelWidth;
+        let targetTop = btnRect.top - panelHeight - 12;
+
+        // If not enough room above, place below button
+        if (targetTop < 12) {
+            targetTop = btnRect.bottom + 12;
+        }
+
+        // Clamp inside visible viewport
+        const maxLeft = window.innerWidth - panelWidth - 12;
+        const maxTop = window.innerHeight - panelHeight - 12;
+
+        targetLeft = Math.max(12, Math.min(targetLeft, maxLeft));
+        targetTop = Math.max(12, Math.min(targetTop, maxTop));
+
+        chatPanel.style.left = `${targetLeft}px`;
+        chatPanel.style.top = `${targetTop}px`;
+        chatPanel.style.right = 'auto';
+        chatPanel.style.bottom = 'auto';
+    }
+
+    function initDraggable(element, handle) {
+        if (!element || !handle) return;
 
         let isDragging = false;
-        let startX, startY, initialLeft, initialTop;
-        let dragDistance = 0;
+        let shiftX = 0;
+        let shiftY = 0;
+        let startX = 0;
+        let startY = 0;
 
-        function startDrag(e) {
-            if (e.target.closest('#chatCloseBtn') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('button:not(#chatToggleBtn)')) return;
-            
-            isDragging = true;
-            hasDraggedWidget = false;
-            dragDistance = 0;
-            
+        function onPointerDown(e) {
+            if (e.target.closest('#chatCloseBtn') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('button:not(#chatToggleBtn)')) {
+                return;
+            }
+
             const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
             const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-            
+
             startX = clientX;
             startY = clientY;
 
-            const rect = widget.getBoundingClientRect();
-            initialLeft = rect.left;
-            initialTop = rect.top;
+            const rect = element.getBoundingClientRect();
+            shiftX = clientX - rect.left;
+            shiftY = clientY - rect.top;
 
-            widget.style.transition = 'none';
+            isDragging = true;
+            hasDraggedWidget = false;
 
-            window.addEventListener('mousemove', moveDrag, { passive: false });
-            window.addEventListener('mouseup', endDrag);
-            window.addEventListener('touchmove', moveDrag, { passive: false });
-            window.addEventListener('touchend', endDrag);
+            element.style.transition = 'none';
+
+            window.addEventListener('mousemove', onPointerMove, { passive: false });
+            window.addEventListener('mouseup', onPointerUp);
+            window.addEventListener('touchmove', onPointerMove, { passive: false });
+            window.addEventListener('touchend', onPointerUp);
         }
 
-        function moveDrag(e) {
+        function onPointerMove(e) {
             if (!isDragging) return;
+
             const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
             const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
 
-            const dx = clientX - startX;
-            const dy = clientY - startY;
-            dragDistance = Math.hypot(dx, dy);
-
-            if (dragDistance > 6) {
+            const moveDist = Math.hypot(clientX - startX, clientY - startY);
+            if (moveDist > 5) {
                 hasDraggedWidget = true;
                 if (e.cancelable) e.preventDefault();
 
-                let newLeft = initialLeft + dx;
-                let newTop = initialTop + dy;
+                let newLeft = clientX - shiftX;
+                let newTop = clientY - shiftY;
 
-                const maxLeft = window.innerWidth - widget.offsetWidth - 12;
-                const maxTop = window.innerHeight - widget.offsetHeight - 12;
+                const maxLeft = window.innerWidth - element.offsetWidth - 12;
+                const maxTop = window.innerHeight - element.offsetHeight - 12;
+
                 newLeft = Math.max(12, Math.min(newLeft, maxLeft));
                 newTop = Math.max(12, Math.min(newTop, maxTop));
 
-                widget.style.left = `${newLeft}px`;
-                widget.style.top = `${newTop}px`;
-                widget.style.right = 'auto';
-                widget.style.bottom = 'auto';
+                element.style.left = `${newLeft}px`;
+                element.style.top = `${newTop}px`;
+                element.style.right = 'auto';
+                element.style.bottom = 'auto';
             }
         }
 
-        function endDrag() {
+        function onPointerUp() {
             if (!isDragging) return;
             isDragging = false;
-            widget.style.transition = '';
-            window.removeEventListener('mousemove', moveDrag);
-            window.removeEventListener('mouseup', endDrag);
-            window.removeEventListener('touchmove', moveDrag);
-            window.removeEventListener('touchend', endDrag);
-            
+            element.style.transition = '';
+
+            window.removeEventListener('mousemove', onPointerMove);
+            window.removeEventListener('mouseup', onPointerUp);
+            window.removeEventListener('touchmove', onPointerMove);
+            window.removeEventListener('touchend', onPointerUp);
+
             setTimeout(() => {
                 hasDraggedWidget = false;
-            }, 80);
+            }, 100);
         }
 
-        toggleBtn.addEventListener('mousedown', startDrag);
-        toggleBtn.addEventListener('touchstart', startDrag, { passive: true });
-        
-        if (chatHeader) {
-            chatHeader.addEventListener('mousedown', startDrag);
-            chatHeader.addEventListener('touchstart', startDrag, { passive: true });
+        handle.addEventListener('mousedown', onPointerDown);
+        handle.addEventListener('touchstart', onPointerDown, { passive: true });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggleBtn = document.getElementById('chatToggleBtn');
+        const chatPanel = document.getElementById('chatPanel');
+        const chatHeader = document.getElementById('chatPanelHeader');
+
+        if (toggleBtn) {
+            initDraggable(toggleBtn, toggleBtn);
+        }
+        if (chatPanel && chatHeader) {
+            initDraggable(chatPanel, chatHeader);
         }
     });
 </script>
@@ -1083,11 +1120,17 @@
                 if (hasDraggedWidget) {
                     return;
                 }
-                const isOpen = !chatPanel.classList.contains('hidden');
-                chatPanel.classList.toggle('hidden');
-                chatToggleBtn.setAttribute('aria-expanded', String(!isOpen));
-                if (!isOpen && chatInput) {
-                    setTimeout(() => chatInput.focus(), 150);
+                const isCurrentlyHidden = chatPanel.classList.contains('hidden');
+                if (isCurrentlyHidden) {
+                    positionChatPanel();
+                    chatPanel.classList.remove('hidden');
+                    chatToggleBtn.setAttribute('aria-expanded', 'true');
+                    if (chatInput) {
+                        setTimeout(() => chatInput.focus(), 150);
+                    }
+                } else {
+                    chatPanel.classList.add('hidden');
+                    chatToggleBtn.setAttribute('aria-expanded', 'false');
                 }
             });
         }
