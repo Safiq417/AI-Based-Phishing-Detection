@@ -47,14 +47,30 @@ def extract_urls_from_text(text):
         u = raw.strip('.,;:!?)"\'')
         if len(u) > 3 and not u.endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg')):
             cleaned.append(u)
-    return list(dict.fromkeys(cleaned)) # preserve unique
+    return list(dict.fromkeys(cleaned))
+
+def get_vision_api_key():
+    if os.path.exists('.env'):
+        try:
+            with open('.env', 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        k, v = line.split('=', 1)
+                        k = k.strip()
+                        v = v.strip().strip('"\'')
+                        if k and v:
+                            os.environ[k] = v
+        except Exception:
+            pass
+    return os.environ.get('GROQ_API_KEY') or os.environ.get('GROK_API_KEY') or os.environ.get('XAI_API_KEY') or ''
 
 def call_groq_vision_api(base64_image, groq_api_key):
     """
-    Calls Groq Vision endpoint with dynamic model fallback to inspect screenshot.
+    Calls Vision endpoint (Groq or xAI Grok) to forensically inspect screenshot.
     """
     headers = {
-        "Authorization": f"Bearer {groq_api_key}",
+        "Authorization": f"Bearer {groq_api_key.strip()}",
         "Content-Type": "application/json"
     }
 
@@ -73,7 +89,14 @@ def call_groq_vision_api(base64_image, groq_api_key):
         "}"
     )
 
-    for model_name in DEFAULT_VISION_MODELS:
+    if groq_api_key.startswith('xai-'):
+        endpoint = "https://api.x.ai/v1/chat/completions"
+        candidate_models = ["grok-2-vision-1212"]
+    else:
+        endpoint = "https://api.groq.com/openai/v1/chat/completions"
+        candidate_models = DEFAULT_VISION_MODELS
+
+    for model_name in candidate_models:
         payload = {
             "model": model_name,
             "messages": [
@@ -96,7 +119,7 @@ def call_groq_vision_api(base64_image, groq_api_key):
         }
 
         try:
-            resp = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=12)
+            resp = requests.post(endpoint, headers=headers, json=payload, timeout=15)
             if resp.status_code == 200:
                 data = resp.json()
                 content = data["choices"][0]["message"]["content"]
@@ -114,6 +137,8 @@ def analyze_screenshot(image_bytes, filename="", groq_api_key=None):
     2. Vision AI multimodal inspection (or heuristic fallback)
     3. URL extraction & threat scoring
     """
+    if not groq_api_key:
+        groq_api_key = get_vision_api_key()
     report = {
         "filename": filename or "screenshot.jpg",
         "image_size": [0, 0],

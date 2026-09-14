@@ -7,17 +7,43 @@ from datetime import datetime
 from urllib.parse import urlparse
 from difflib import SequenceMatcher
 import time
+def load_env_variables():
+    """Dynamically reads .env file so changes take effect immediately without restarting."""
+    if os.path.exists('.env'):
+        try:
+            with open('.env', 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        k, v = line.split('=', 1)
+                        k = k.strip()
+                        v = v.strip().strip('"\'')
+                        if k and v:
+                            os.environ[k] = v
+        except Exception:
+            pass
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     pass
+load_env_variables()
 
 from dga_detector import analyze_dga
 from website_analyzer import analyze_website
 from screenshot_analyzer import analyze_screenshot
-VIRUSTOTAL_API_KEY = os.environ.get('VIRUSTOTAL_API_KEY')
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
+
+def get_groq_api_key():
+    load_env_variables()
+    return os.environ.get('GROQ_API_KEY') or os.environ.get('GROK_API_KEY') or os.environ.get('XAI_API_KEY') or ''
+
+def get_virustotal_api_key():
+    load_env_variables()
+    return os.environ.get('VIRUSTOTAL_API_KEY') or ''
+
+VIRUSTOTAL_API_KEY = get_virustotal_api_key()
+GROQ_API_KEY = get_groq_api_key()
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
 
 try:
@@ -257,7 +283,7 @@ def scan_url_virustotal(url):
 def analyze_text_with_ai(content):
     if requests is None:
         return None
-    api_key = os.environ.get('GROQ_API_KEY') or os.environ.get('GROK_API_KEY')
+    api_key = get_groq_api_key()
     if not api_key:
         return None
     try:
@@ -275,26 +301,36 @@ def analyze_text_with_ai(content):
             "REASON: [one sentence explanation]\n\n"
             f"Text to analyze:\n{content[:1000]}"
         )
-        model_name = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b')
-        payload = {
-            'model': model_name,
-            'messages': [{'role': 'user', 'content': prompt}],
-            'temperature': 0.2,
-            'max_tokens': 100
-        }
-        resp = requests.post(
-            'https://api.groq.com/openai/v1/chat/completions',
-            headers=headers, json=payload, timeout=10
-        )
-        if resp.status_code == 200:
-            reply = resp.json()['choices'][0]['message']['content'].strip()
-            verdict, reason = '', ''
-            for line in reply.splitlines():
-                if line.startswith('VERDICT:'):
-                    verdict = line.replace('VERDICT:', '').strip()
-                elif line.startswith('REASON:'):
-                    reason = line.replace('REASON:', '').strip()
-            return {'verdict': verdict, 'reason': reason}
+        
+        if api_key.startswith('xai-'):
+            endpoint = 'https://api.x.ai/v1/chat/completions'
+            candidate_models = ['grok-2-latest', 'grok-beta']
+        else:
+            endpoint = os.environ.get('GROQ_API_URL', 'https://api.groq.com/openai/v1/chat/completions')
+            user_model = os.environ.get('GROQ_MODEL')
+            candidate_models = [user_model] if user_model else ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768']
+
+        for model_name in candidate_models:
+            payload = {
+                'model': model_name,
+                'messages': [{'role': 'user', 'content': prompt}],
+                'temperature': 0.2,
+                'max_tokens': 150
+            }
+            try:
+                resp = requests.post(endpoint, headers=headers, json=payload, timeout=10)
+                if resp.status_code == 200:
+                    reply = resp.json()['choices'][0]['message']['content'].strip()
+                    verdict, reason = '', ''
+                    for line in reply.splitlines():
+                        if line.startswith('VERDICT:'):
+                            verdict = line.replace('VERDICT:', '').strip()
+                        elif line.startswith('REASON:'):
+                            reason = line.replace('REASON:', '').strip()
+                    if verdict:
+                        return {'verdict': verdict, 'reason': reason}
+            except Exception:
+                continue
         return None
     except Exception:
         return None
@@ -619,7 +655,8 @@ def scan_screenshot_endpoint():
         return jsonify({'error': 'File size exceeds 10MB limit.'}), 400
 
     # Run Screenshot Vision / OCR Analysis
-    result = analyze_screenshot(file_bytes, filename=file.filename, groq_api_key=GROQ_API_KEY)
+    current_ai_key = get_groq_api_key()
+    result = analyze_screenshot(file_bytes, filename=file.filename, groq_api_key=current_ai_key)
 
     # If embedded URLs were discovered, inspect them with our DGA and Typosquatting engines
     url_findings = []
@@ -1095,11 +1132,11 @@ def ai_chat():
         return jsonify({'error': 'Authentication required.'}), 401
 
     if requests is None:
-        return jsonify({'error': 'AI service not configured. Please install the requests library and set GROQ_API_KEY.'}), 500
+        return jsonify({'error': 'AI service not configured. Please install the requests library.'}), 500
 
-    api_key = os.environ.get('GROQ_API_KEY') or os.environ.get('GROK_API_KEY')
+    api_key = get_groq_api_key()
     if not api_key:
-        return jsonify({'error': 'AI provider API key missing. Please set GROQ_API_KEY or GROK_API_KEY.'}), 500
+        return jsonify({'error': 'AI provider API key missing. Please set GROQ_API_KEY in your .env file or environment.'}), 500
 
     payload = request.json or {}
     user_message = payload.get('message', '').strip()
@@ -1145,72 +1182,63 @@ def ai_chat():
                 messages.append({'role': item['role'], 'content': item['content']})
     messages.append({'role': 'user', 'content': user_message})
 
-    GROQ_API_URL = os.environ.get('GROQ_API_URL', 'https://api.groq.com/openai/v1/chat/completions')
-    model_name = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b')
+    if api_key.startswith('xai-'):
+        endpoint = 'https://api.x.ai/v1/chat/completions'
+        candidate_models = ['grok-2-latest', 'grok-beta']
+    else:
+        endpoint = os.environ.get('GROQ_API_URL', 'https://api.groq.com/openai/v1/chat/completions')
+        user_model = os.environ.get('GROQ_MODEL')
+        candidate_models = [user_model] if user_model else ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768']
+
     headers = {
         'Authorization': f'Bearer {api_key.strip()}',
         'Content-Type': 'application/json',
         'Accept': 'application/json',
     }
-    payload = {
-        'model': model_name,
-        'messages': messages,
-        'temperature': 0.6,
-        'max_tokens': 1024,
-    }
 
-    def try_send_with_retries(url, headers, payload, max_retries=3):
-        last_exc = None
-        for attempt in range(1, max_retries + 1):
-            try:
-                response = requests.post(url, headers=headers, json=payload, timeout=20)
-                if response.status_code == 200:
-                    return response.json()
+    last_error = "Unable to reach AI service"
+    for model_name in candidate_models:
+        payload = {
+            'model': model_name,
+            'messages': messages,
+            'temperature': 0.6,
+            'max_tokens': 1024,
+        }
+        try:
+            response = requests.post(endpoint, headers=headers, json=payload, timeout=20)
+            if response.status_code == 200:
+                response_json = response.json()
+                assistant_text = ''
+                choices = response_json.get('choices', [])
+                if choices:
+                    assistant_text = choices[0].get('message', {}).get('content', '').strip()
+                if not assistant_text:
+                    assistant_text = response_json.get('output_text', '').strip()
+
+                assistant_text = assistant_text.replace('**', '').replace('__', '')
+                assistant_text = assistant_text.replace('`', '')
+                assistant_text = assistant_text.replace('|', '').replace('---', '')
+                assistant_text = assistant_text.replace('* ', '- ')
+                assistant_text = assistant_text.strip()
+
+                assistant_text = assistant_text or 'No response received from the AI model.'
+                return jsonify({
+                    'reply': assistant_text,
+                    'history': history + [{'role': 'user', 'content': user_message}, {'role': 'assistant', 'content': assistant_text}]
+                })
+            else:
                 body = response.text
-                if response.status_code in (429, 500, 502, 503, 504):
-                    last_exc = Exception(f'Groq API error {response.status_code}: {body}')
-                    time.sleep(1 << (attempt - 1))
-                    continue
                 try:
-                    error_json = response.json()
-                    error_message = error_json.get('error', {}).get('message') or error_json.get('message') or body
-                except ValueError:
-                    error_message = body
-                raise Exception(f'Groq API error {response.status_code}: {error_message}')
-            except requests.exceptions.RequestException as e:
-                last_exc = e
-                if attempt < max_retries:
-                    time.sleep(1 << (attempt - 1))
-                    continue
-                raise
-        raise last_exc
+                    err_j = response.json()
+                    last_error = err_j.get('error', {}).get('message') or body
+                except Exception:
+                    last_error = body
+        except Exception as ex:
+            last_error = str(ex)
 
-    try:
-        response_json = try_send_with_retries(GROQ_API_URL, headers, payload, max_retries=4)
-        # Groq chat completions format: choices[0].message.content
-        assistant_text = ''
-        choices = response_json.get('choices', [])
-        if choices:
-            assistant_text = choices[0].get('message', {}).get('content', '').strip()
-        # fallback for any other response shape
-        if not assistant_text:
-            assistant_text = response_json.get('output_text', '').strip()
-
-        # Remove common markdown artifacts so the response stays plain text.
-        assistant_text = assistant_text.replace('**', '').replace('__', '')
-        assistant_text = assistant_text.replace('`', '')
-        assistant_text = assistant_text.replace('|', '').replace('---', '')
-        assistant_text = assistant_text.replace('* ', '- ')
-        assistant_text = assistant_text.strip()
-
-        assistant_text = assistant_text or 'No response received from the AI model.'
-        return jsonify({'reply': assistant_text, 'history': history + [{'role': 'user', 'content': user_message}, {'role': 'assistant', 'content': assistant_text}]})
-    except Exception as e:
-        err_msg = str(e)
-        print(f"AI Analysis Error: {err_msg}")
-        if '401' in err_msg:
-            return jsonify({'error': 'Invalid Groq API key. Please verify your API key on console.groq.com.'}), 500
-        return jsonify({'error': f'AI service error: {err_msg}'}), 500
+    if '401' in str(last_error) or 'invalid_api_key' in str(last_error):
+        return jsonify({'error': 'Invalid API key. Please check your GROQ_API_KEY in .env or console.groq.com.'}), 500
+    return jsonify({'error': f'AI service error: {last_error}'}), 500
 
 @app.route('/demo')
 def demo_presentation():
