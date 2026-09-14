@@ -7,10 +7,11 @@ from datetime import datetime
 from urllib.parse import urlparse
 from difflib import SequenceMatcher
 import time
-from dotenv import load_dotenv
-
-# Load environment variables from local .env file (hidden from Git)
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 from dga_detector import analyze_dga
 VIRUSTOTAL_API_KEY = os.environ.get('VIRUSTOTAL_API_KEY')
