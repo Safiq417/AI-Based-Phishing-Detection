@@ -155,10 +155,11 @@
                         <td class="py-3 truncate max-w-[200px]" title="{{ row[3] }}">{{ row[3] }}</td>
                         <td class="py-3 font-bold text-slate-900 dark:text-slate-100">{{ "%.1f"|format(row[4]) }}%</td>
                         <td class="py-3">
+                            {% set r_clean = (row[5] or '')|string|lower %}
                             <span class="px-2.5 py-1 rounded-full text-xs font-bold 
-                            {% if row[5] == 'Safe' %} bg-green-100 text-green-700 dark:bg-green-900/60 dark:text-green-300
-                            {% elif row[5] == 'Low Risk' %} bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300
-                            {% elif row[5] == 'Medium Risk' %} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/60 dark:text-yellow-300
+                            {% if 'safe' in r_clean %} bg-green-100 text-green-700 dark:bg-green-900/60 dark:text-green-300
+                            {% elif 'low' in r_clean %} bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300
+                            {% elif 'medium' in r_clean or 'suspicious' in r_clean %} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/60 dark:text-yellow-300
                             {% else %} bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300 {% endif %}">
                                 {{ row[5] }}
                             </span>

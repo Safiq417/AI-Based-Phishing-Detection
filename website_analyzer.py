@@ -352,16 +352,16 @@ def analyze_website(target_input):
     report["threat_score"] = min(100.0, max(0.0, report["threat_score"]))
     
     if report["threat_score"] >= 75.0:
-        report["risk_level"] = "CRITICAL COMPROMISE"
+        report["risk_level"] = "Critical Risk"
         report["is_safe"] = False
     elif report["threat_score"] >= 45.0:
-        report["risk_level"] = "HIGH RISK"
+        report["risk_level"] = "High Risk"
         report["is_safe"] = False
     elif report["threat_score"] >= 20.0:
-        report["risk_level"] = "SUSPICIOUS"
+        report["risk_level"] = "Suspicious"
         report["is_safe"] = False
     else:
-        report["risk_level"] = "SAFE"
+        report["risk_level"] = "Safe"
         report["is_safe"] = True
 
     return report
