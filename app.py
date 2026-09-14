@@ -578,9 +578,15 @@ def scan_website_endpoint():
         "INSERT INTO history (user_id, input_type, content, score, risk_level) VALUES (?, ?, ?, ?, ?)",
         (session['user_id'], 'website_deep_scan', result['target_url'], result['threat_score'], result['risk_level'])
     )
+    new_history_id = c.lastrowid
     conn.commit()
     conn.close()
     log_activity(session['user_id'], f"Executed Live Website Deep Inspection on {result['hostname']}")
+
+    result['history_id'] = new_history_id
+    result['input_type'] = 'website_deep_scan'
+    result['pdf_url'] = url_for('export_report', history_id=new_history_id)
+    result['delete_url'] = url_for('delete_history', id=new_history_id)
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json or request.form.get('ajax') == '1':
         return jsonify(result)
@@ -631,7 +637,7 @@ def scan_screenshot_endpoint():
         if u_dga.get('is_dga') or u_typo:
             result['threat_score'] = min(100.0, result['threat_score'] + 30.0)
             result['is_safe'] = False
-            result['risk_level'] = 'CRITICAL COMPROMISE' if result['threat_score'] >= 75 else 'HIGH RISK'
+            result['risk_level'] = 'Critical Risk' if result['threat_score'] >= 75 else 'High Risk'
 
     result['embedded_url_analysis'] = url_findings
 
@@ -643,9 +649,15 @@ def scan_screenshot_endpoint():
         "INSERT INTO history (user_id, input_type, content, score, risk_level) VALUES (?, ?, ?, ?, ?)",
         (session['user_id'], 'screenshot_ocr', db_content, result['threat_score'], result['risk_level'])
     )
+    new_history_id = c.lastrowid
     conn.commit()
     conn.close()
     log_activity(session['user_id'], f"Processed Vision OCR Analysis for screenshot: {file.filename}")
+
+    result['history_id'] = new_history_id
+    result['input_type'] = 'screenshot_ocr'
+    result['pdf_url'] = url_for('export_report', history_id=new_history_id)
+    result['delete_url'] = url_for('delete_history', id=new_history_id)
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json or request.form.get('ajax') == '1':
         return jsonify(result)
