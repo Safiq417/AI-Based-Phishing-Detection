@@ -96,7 +96,7 @@ def init_db():
     
     # Create or update default admin account
     cursor.execute("SELECT * FROM users WHERE username='admin'")
-    admin_default_pw = os.environ.get('ADMIN_PASSWORD', 'Admin#12345')
+    admin_default_pw = os.environ.get('ADMIN_PASSWORD', 'Safiq#Team@7003')
     hashed_pw = generate_password_hash(admin_default_pw)
     if not cursor.fetchone():
         cursor.execute("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)", 
