@@ -36,7 +36,7 @@ from screenshot_analyzer import analyze_screenshot
 
 def get_groq_api_key():
     load_env_variables()
-    return os.environ.get('GROQ_API_KEY') or os.environ.get('GROK_API_KEY') or os.environ.get('XAI_API_KEY') or ''
+    return os.environ.get('GROQ_API_KEY') or os.environ.get('GROK_API_KEY') or os.environ.get('XAI_API_KEY') or os.environ.get('PhishShield_Vision_OCR') or os.environ.get('GROQ_VISION_KEY') or ''
 
 def get_virustotal_api_key():
     load_env_variables()
