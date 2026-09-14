@@ -7,6 +7,11 @@ from datetime import datetime
 from urllib.parse import urlparse
 from difflib import SequenceMatcher
 import time
+from dotenv import load_dotenv
+
+# Load environment variables from local .env file (hidden from Git)
+load_dotenv()
+
 from dga_detector import analyze_dga
 VIRUSTOTAL_API_KEY = os.environ.get('VIRUSTOTAL_API_KEY')
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
@@ -96,7 +101,7 @@ def init_db():
     
     # Create or update default admin account
     cursor.execute("SELECT * FROM users WHERE username='admin'")
-    admin_default_pw = os.environ.get('ADMIN_PASSWORD', 'Safiq#Team@7003')
+    admin_default_pw = os.environ.get('ADMIN_PASSWORD', 'Admin@12345')
     hashed_pw = generate_password_hash(admin_default_pw)
     if not cursor.fetchone():
         cursor.execute("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)", 

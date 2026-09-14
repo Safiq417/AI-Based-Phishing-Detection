@@ -10,5 +10,9 @@ ENV/
 *.db
 database/*.db
 reports/*.pdf
+.env
+.env.local
+.env.*.local
+!.env.example
 .DS_Store
 Thumbs.db
