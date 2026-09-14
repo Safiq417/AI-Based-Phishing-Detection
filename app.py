@@ -168,6 +168,31 @@ def is_valid_url(url):
         return False
 
 
+POPULAR_DOMAINS = [
+    'google.com', 'facebook.com', 'amazon.com', 'paypal.com', 'microsoft.com',
+    'apple.com', 'netflix.com', 'instagram.com', 'whatsapp.com', 'youtube.com',
+    'sbi.co.in', 'hdfcbank.com', 'icicibank.com', 'linkedin.com', 'twitter.com',
+    'chase.com', 'wellsfargo.com', 'bankofamerica.com', 'binance.com', 'coinbase.com',
+    'dropbox.com', 'adobe.com', 'github.com', 'meta.com'
+]
+POPULAR_BRANDS = [d.split('.')[0] for d in POPULAR_DOMAINS]
+
+def extract_domain_parts(hostname):
+    """
+    Extracts (subdomains, root_domain) from a hostname.
+    Handles standard two-part ccTLDs like .co.in, .com.au, .co.uk.
+    """
+    parts = [p for p in (hostname or '').split('.') if p]
+    if len(parts) >= 2:
+        if len(parts) >= 3 and parts[-2] in ('co', 'com', 'org', 'net', 'gov', 'edu', 'ac'):
+            root_domain = '.'.join(parts[-3:])
+            subdomains = '.'.join(parts[:-3])
+        else:
+            root_domain = '.'.join(parts[-2:])
+            subdomains = '.'.join(parts[:-2])
+        return subdomains, root_domain
+    return '', hostname
+
 def analyze_url_lexical(url):
     url = url.strip()
     parsed = urlparse(url)
@@ -176,46 +201,79 @@ def analyze_url_lexical(url):
 
     report = {
         "is_ip": 0, "is_shortened": 0, "suspicious_tld": 0,
-        "excessive_subdomains": 0, "no_https": 0, "score_deduction": 0
+        "excessive_subdomains": 0, "no_https": 0, "deceptive_scheme": 0,
+        "excessive_hyphens": 0, "subdomain_brand_hijack": None,
+        "compound_auth_keywords": 0, "score_deduction": 0
     }
 
-    # IP-based URL check
+    is_legit_popular = any(hostname == legit or hostname.endswith('.' + legit) for legit in POPULAR_DOMAINS)
+    subdomains, root_domain = extract_domain_parts(hostname)
+
+    # 1. Deceptive scheme/protocol embedded in hostname (e.g. https-www-, http-, ssl-, signin-)
+    if re.search(r'(?:^|[\.-])(https?|www|ssl|signin|login)[-_]', hostname):
+        report["deceptive_scheme"] = 1
+        report["score_deduction"] += 25
+
+    # 2. Excessive hyphens in hostname (Attackers construct fake URL paths inside DNS labels)
+    hyphen_count = hostname.count('-')
+    if hyphen_count >= 3:
+        report["excessive_hyphens"] = hyphen_count
+        report["score_deduction"] += 20
+    elif hyphen_count == 2:
+        report["excessive_hyphens"] = hyphen_count
+        report["score_deduction"] += 10
+
+    # 3. Subdomain brand hijacking (Protected brand name in subdomain of unaffiliated apex domain)
+    if not is_legit_popular and subdomains:
+        for brand in POPULAR_BRANDS:
+            if len(brand) >= 4 and brand in subdomains:
+                report["subdomain_brand_hijack"] = brand
+                report["score_deduction"] += 35
+                break
+
+    # 4. Compound auth / credential harvesting keywords in hostname
+    auth_keywords = ['webapps', 'mpp', 'home', 'signin', 'login', 'verify', 'account', 'portal', 'secure', 'update', 'banking', 'service', 'auth']
+    matched_auth = [kw for kw in auth_keywords if kw in hostname]
+    if not is_legit_popular and len(matched_auth) >= 2:
+        report["compound_auth_keywords"] = len(matched_auth)
+        report["score_deduction"] += 15
+
+    # 5. IP-based URL check
     if re.match(r'^\d{1,3}(?:\.\d{1,3}){3}$', hostname):
         report["is_ip"] = 1
         report["score_deduction"] += 30
 
-    # @-symbol embedded userinfo or suspicious URL form
+    # 6. @-symbol embedded userinfo or suspicious URL form
     if '@' in url:
         report["score_deduction"] += 30
 
-    # URL shortening services
+    # 7. URL shortening services
     shorteners = ['bit.ly', 'goo.gl', 'tinyurl.com', 't.co', 'is.gd', 'buff.ly', 'adf.ly']
     if any(hostname.endswith(shortener) for shortener in shorteners) or any(shortener in normalized for shortener in shorteners):
         report["is_shortened"] = 1
         report["score_deduction"] += 20
 
-    # Suspicious top-level domains
+    # 8. Suspicious top-level domains
     suspicious_tlds = ['.xyz', '.top', '.club', '.gq', '.ml', '.cf', '.tk', '.info', '.download']
     if any(hostname.endswith(tld) for tld in suspicious_tlds):
         report["suspicious_tld"] = 1
         report["score_deduction"] += 20
 
-    # Excessive subdomains
-    subdomains = [part for part in hostname.split('.') if part]
-    if len(subdomains) > 4:
+    # 9. Excessive subdomains
+    subdomains_list = [part for part in hostname.split('.') if part]
+    if len(subdomains_list) > 4:
         report["excessive_subdomains"] = 1
         report["score_deduction"] += 15
 
-    # Plain HTTP usage is weaker than HTTPS
+    # 10. Plain HTTP usage
     if parsed.scheme == 'http':
         report["no_https"] = 1
         report["score_deduction"] += 10
 
-    # Suspicious or obfuscated URL content (skip brand-name deduction if hosted on that actual legitimate domain)
+    # 11. Suspicious or obfuscated URL content
     suspicious_keywords = ['verify', 'bank', 'secure', 'login', 'wp-admin', 'giftcard', 'free', 'update', 'billing']
-    is_legit_popular = any(hostname == legit or hostname.endswith('.' + legit) for legit in POPULAR_DOMAINS)
     if not is_legit_popular:
-        suspicious_keywords.extend(['paypal', 'account', 'amazon', 'netflix', 'apple', 'microsoft', 'google'])
+        suspicious_keywords.extend(POPULAR_BRANDS)
 
     if any(keyword in normalized for keyword in suspicious_keywords):
         report["score_deduction"] += 10
@@ -227,12 +285,6 @@ def analyze_url_lexical(url):
         report["score_deduction"] += 10
 
     return report
-
-POPULAR_DOMAINS = [
-    'google.com', 'facebook.com', 'amazon.com', 'paypal.com', 'microsoft.com',
-    'apple.com', 'netflix.com', 'instagram.com', 'whatsapp.com', 'youtube.com',
-    'sbi.co.in', 'hdfcbank.com', 'icicibank.com', 'linkedin.com', 'twitter.com'
-]
 
 def check_typosquatting(url):
     try:
@@ -525,6 +577,14 @@ def dashboard():
                     reasons.append(f"VirusTotal: {suspicious} engines flagged as suspicious")
                 else:
                     reasons.append("VirusTotal: No engines flagged this URL")
+            if url_features.get("deceptive_scheme"):
+                reasons.append("Deceptive protocol/service prefix ('https-' / 'http-' / 'ssl-') detected in domain structure")
+            if url_features.get("excessive_hyphens"):
+                reasons.append(f"Excessive hyphenation ({url_features['excessive_hyphens']} hyphens) detected in hostname — typical mobile phishing masking technique")
+            if url_features.get("subdomain_brand_hijack"):
+                reasons.append(f"Subdomain Brand Hijacking: Protected brand '{url_features['subdomain_brand_hijack']}' detected in subdomain while apex domain is unaffiliated")
+            if url_features.get("compound_auth_keywords"):
+                reasons.append("Hostname contains compound authentication/portal deceptive terms ('webapps', 'mpp', 'signin', 'verify')")
             if url_features.get("is_ip"):
                 reasons.append("URL uses a raw IP address")
             if '@' in content:
@@ -881,6 +941,10 @@ def export_report(history_id):
         # 1. Lexical Structural Engine
         lex_score = lex_features.get('score_deduction', 0)
         lex_details = []
+        if lex_features.get('deceptive_scheme'): lex_details.append("Fake Protocol Prefix")
+        if lex_features.get('excessive_hyphens'): lex_details.append("Hyphen Masking")
+        if lex_features.get('subdomain_brand_hijack'): lex_details.append(f"Subdomain Hijack ({lex_features['subdomain_brand_hijack']})")
+        if lex_features.get('compound_auth_keywords'): lex_details.append("Auth Tokens")
         if lex_features.get('is_ip'): lex_details.append("Raw IPv4")
         if lex_features.get('is_shortened'): lex_details.append("Shortener Service")
         if lex_features.get('suspicious_tld'): lex_details.append("Abnormal TLD")
