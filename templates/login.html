@@ -3,22 +3,22 @@
 <div class="max-w-md mx-auto card p-8 mt-12">
     <div class="text-center mb-8">
         <img src="{{ url_for('static', filename='logo.png') }}" alt="PhishShield AI" class="h-16 w-16 mx-auto mb-3 rounded-2xl shadow-lg shadow-blue-500/25 ring-2 ring-blue-500/30 object-cover">
-        <h2 class="text-2xl font-bold text-slate-800">Welcome Back</h2>
-        <p class="text-sm text-slate-500 mt-1">Sign in to access the security gateway</p>
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Welcome Back</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Sign in to access the security gateway</p>
     </div>
     <form action="{{ url_for('login') }}" method="POST" class="space-y-5">
         <div>
-            <label class="block text-sm font-semibold mb-1 text-slate-700">Username</label>
+            <label class="block text-xs font-bold uppercase tracking-wider mb-1.5 text-slate-700 dark:text-slate-300">Username</label>
             <input type="text" name="username" required class="input-field" placeholder="admin">
         </div>
         <div>
-            <label class="block text-sm font-semibold mb-1 text-slate-700">Password</label>
+            <label class="block text-xs font-bold uppercase tracking-wider mb-1.5 text-slate-700 dark:text-slate-300">Password</label>
             <input type="password" name="password" required class="input-field" placeholder="••••••••">
         </div>
         <button type="submit" class="btn-primary mt-2">Sign In</button>
     </form>
-    <p class="mt-6 text-sm text-center text-slate-500">
-        Don't have an account? <a href="{{ url_for('register') }}" class="text-blue-600 font-semibold hover:underline">Register here</a>
+    <p class="mt-6 text-sm text-center text-slate-500 dark:text-slate-400">
+        Don't have an account? <a href="{{ url_for('register') }}" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">Register here</a>
     </p>
 </div>
 {% endblock %}
