@@ -7,10 +7,9 @@ import requests
 from PIL import Image
 from urllib.parse import urlparse
 
-# Dynamic Vision Model Config (Defaults to dynamic hierarchy, overridable via env)
 DEFAULT_VISION_MODELS = [
-    os.environ.get("GROQ_VISION_MODEL", "llama-3.2-11b-vision-preview"),
-    "llama-3.2-90b-vision-preview"
+    os.environ.get("GROQ_VISION_MODEL", "qwen/qwen3.6-27b"),
+    "meta-llama/llama-4-scout-17b-16e-instruct"
 ]
 
 SUSPICIOUS_IMAGE_KEYWORDS = [
@@ -124,6 +123,12 @@ def call_groq_vision_api(base64_image, groq_api_key):
                 data = resp.json()
                 content = data["choices"][0]["message"]["content"]
                 return json.loads(content), model_name
+            else:
+                # Print the actual API error (e.g. model_decommissioned, invalid_api_key,
+                # rate_limit_exceeded) instead of silently moving on -- this is the
+                # single most useful line for debugging "OCR not working".
+                print(f"[-] Vision model {model_name} returned HTTP {resp.status_code}: {resp.text[:500]}. Trying next...")
+                continue
         except Exception as e:
             print(f"[-] Vision model {model_name} failed: {e}. Trying next...")
             continue
