@@ -40,6 +40,7 @@
             <!-- TAB 1: QUICK URL / TEXT SCANNER -->
             <div id="tabContentQuick" class="space-y-4">
                 <form action="{{ url_for('dashboard') }}" method="POST" class="space-y-4" onsubmit="return validatePayload()">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5" for="payloadTypeButton">Payload Type</label>
                         <div class="relative">
@@ -348,7 +349,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
                 body: JSON.stringify({ url: urlInput })
             });
@@ -383,7 +385,8 @@
             const res = await fetch('/scan_screenshot', {
                 method: 'POST',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
                 body: formData
             });
@@ -952,7 +955,8 @@
             const response = await fetch('{{ url_for('ai_chat') }}', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
                 body: JSON.stringify({ message, context: contextPayload })
             });

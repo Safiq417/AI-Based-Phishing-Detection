@@ -1,4 +1,4 @@
-__pycache__/
+﻿__pycache__/
 *.pyc
 *.pyo
 *.pyd
@@ -16,3 +16,12 @@ reports/*.pdf
 !.env.example
 .DS_Store
 Thumbs.db
+PhishShield_AI_Project_Presentation.mp4
+
+PhishShield_AI_Project_Presentation.pptx
+
+New Text Document.txt
+
+static/presentation_video.mp4
+
+

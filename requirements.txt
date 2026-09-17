@@ -1,4 +1,4 @@
-Flask
+﻿Flask
 gunicorn
 numpy
 pandas
@@ -9,3 +9,5 @@ requests
 python-dotenv
 Pillow
 beautifulsoup4
+Flask-WTF
+Flask-Limiter

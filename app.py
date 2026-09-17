@@ -45,6 +45,9 @@ def get_virustotal_api_key():
 VIRUSTOTAL_API_KEY = get_virustotal_api_key()
 GROQ_API_KEY = get_groq_api_key()
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 try:
     import requests
@@ -58,7 +61,23 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24).hex())
+csrf = CSRFProtect(app)
+
+_secret_key = os.environ.get('SECRET_KEY')
+if not _secret_key:
+    if os.environ.get('RENDER'):
+        raise RuntimeError("SECRET_KEY environment variable must be set in production (Render). Set it in the Render dashboard under Environment.")
+    print("[WARNING] SECRET_KEY not set. Using a temporary random key for local development only.")
+    _secret_key = os.urandom(24).hex()
+app.secret_key = _secret_key
+
+app.config['MAX_CONTENT_LENGTH'] = 12 * 1024 * 1024  # 12MB hard cap, slightly above the 10MB screenshot check
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('RENDER') is not None
+
+limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"])
+
 DB_PATH = 'database/phishing_system.db'
 
 # Ensure required directories exist
@@ -131,13 +150,13 @@ def init_db():
     
     # Create or update default admin account
     cursor.execute("SELECT * FROM users WHERE username='admin'")
-    admin_default_pw = os.environ.get('ADMIN_PASSWORD', 'Admin@12345')
-    hashed_pw = generate_password_hash(admin_default_pw)
     if not cursor.fetchone():
-        cursor.execute("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)", 
+        admin_default_pw = os.environ.get('ADMIN_PASSWORD', 'Admin@12345')
+        hashed_pw = generate_password_hash(admin_default_pw)
+        cursor.execute("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)",
                        ('admin', 'admin@cyberdefense.local', hashed_pw, 'admin'))
-    else:
-        cursor.execute("UPDATE users SET password = ? WHERE username = 'admin'", (hashed_pw,))
+        if not os.environ.get('ADMIN_PASSWORD'):
+            print("[WARNING] ADMIN_PASSWORD env var not set. Using insecure default admin password.")
     
     conn.commit()
     conn.close()
@@ -402,12 +421,26 @@ def log_activity(user_id, action):
     conn.commit()
     conn.close()
 
+# --- Error Handlers ---
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    flash("Too many attempts. Please wait a minute and try again.", "danger")
+    return redirect(url_for('login')), 429
+
+@app.errorhandler(413)
+def too_large(e):
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return jsonify({'error': 'File too large. Maximum size is 12MB.'}), 413
+    flash('File too large. Maximum size is 12MB.', 'danger')
+    return redirect(url_for('dashboard'))
+
 # --- Core Web Routes ---
 @app.route('/')
 def index():
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
+@limiter.limit("10 per hour")
 def register():
     if request.method == 'POST':
         username = request.form['username'].strip()
@@ -415,7 +448,14 @@ def register():
         password = request.form['password']
         
         if not username or not email or not password:
-            flash("All structural input parameters are mandatory.", "danger")
+            flash("All fields are required.", "danger")
+            return redirect(url_for('register'))
+            
+        if len(password) < 8:
+            flash("Password must be at least 8 characters long.", "danger")
+            return redirect(url_for('register'))
+        if password.isalpha() or password.isdigit():
+            flash("Password must contain both letters and numbers.", "danger")
             return redirect(url_for('register'))
             
         hashed_password = generate_password_hash(password)
@@ -430,12 +470,13 @@ def register():
             flash("Registration successful. Please login.", "success")
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
-            flash("Username or Email address profile identity collision detected.", "danger")
+            flash("Username or email already exists.", "danger")
             return redirect(url_for('register'))
             
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def login():
     if request.method == 'POST':
         username = request.form['username'].strip()
@@ -454,7 +495,7 @@ def login():
             log_activity(user[0], "User authenticated successfully.")
             return redirect(url_for('dashboard'))
         else:
-            flash("Invalid authentication tokens provided.", "danger")
+            flash("Invalid username or password.", "danger")
             return redirect(url_for('login'))
             
     return render_template('login.html')
@@ -709,6 +750,14 @@ def scan_screenshot_endpoint():
             return jsonify({'error': 'Empty filename uploaded.'}), 400
         flash('No file selected.', 'danger')
         return redirect(url_for('dashboard'))
+        
+    ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'}
+    _ext = os.path.splitext(file.filename)[1].lower()
+    if _ext not in ALLOWED_IMAGE_EXTENSIONS:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'error': f'Unsupported file type: {_ext}. Allowed: PNG, JPG, JPEG, WEBP, GIF, BMP.'}), 400
+        flash('Unsupported file type. Please upload an image (PNG/JPG/WEBP/GIF/BMP).', 'danger')
+        return redirect(url_for('dashboard'))
 
     file_bytes = file.read()
     if len(file_bytes) > 10 * 1024 * 1024:
@@ -717,6 +766,9 @@ def scan_screenshot_endpoint():
     # Run Screenshot Vision / OCR Analysis
     current_ai_key = get_groq_api_key()
     result = analyze_screenshot(file_bytes, filename=file.filename, groq_api_key=current_ai_key)
+    
+    if not result.get("ai_analysis_available", True):
+        result["warning"] = "Deep AI vision analysis was unavailable; results are based on basic heuristics only and may be less accurate."
 
     # If embedded URLs were discovered, inspect them with our DGA and Typosquatting engines
     url_findings = []
@@ -774,7 +826,7 @@ def export_report(history_id):
     
     if not record:
         conn.close()
-        return "Record resolution trace missing.", 404
+        return "Report not found.", 404
         
     # Generate Dynamic Enterprise Forensic PDF Content via ReportLab pipeline
     pdf_filename = f"reports/CyberReport_{history_id}.pdf"

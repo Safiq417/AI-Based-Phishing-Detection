@@ -176,16 +176,15 @@ def analyze_screenshot(image_bytes, filename="", groq_api_key=None):
         vision_result, used_model = call_groq_vision_api(b64_img, groq_api_key)
 
     if vision_result:
-        report["analysis_engine"] = f"Vision AI ({used_model})"
-        report["extracted_text"] = vision_result.get("extracted_text", "")
+        report["analysis_engine"] = f"Multimodal AI Engine ({used_model})"
+        report["extracted_text"] = vision_result.get("extracted_text", "No text detected.")
         report["impersonated_brand"] = vision_result.get("impersonated_brand", "None")
-        report["threat_indicators"] = vision_result.get("threat_indicators", [])
+        report["detected_urls"].extend(vision_result.get("extracted_urls", []))
+        if not report["detected_urls"]:
+            report["detected_urls"] = extract_urls_from_text(report["extracted_text"])
+        report["threat_indicators"].extend(vision_result.get("threat_indicators", []))
         report["summary"] = vision_result.get("summary_verdict", "")
-        
-        extracted_urls = vision_result.get("extracted_urls", [])
-        if not extracted_urls:
-            extracted_urls = extract_urls_from_text(report["extracted_text"])
-        report["detected_urls"] = extracted_urls
+        report["ai_analysis_available"] = True
 
         base_score = float(vision_result.get("confidence_score", 0.0))
         if vision_result.get("is_phishing_detected"):
@@ -196,6 +195,7 @@ def analyze_screenshot(image_bytes, filename="", groq_api_key=None):
         # Fallback heuristic analysis (e.g. when offline or API key missing)
         report["analysis_engine"] = "Local Heuristic Pattern Engine"
         report["extracted_text"] = "Image processed via local heuristic parser (Add GROQ_API_KEY for deep Multimodal OCR)."
+        report["ai_analysis_available"] = False
         
         # Check image metadata / dimensions / aspect ratio
         w, h = img_dimensions
