@@ -82,7 +82,7 @@ def call_groq_vision_api(base64_image, groq_api_key):
         "{\n"
         '  "extracted_text": "Full text transcript found in the image",\n'
         '  "is_phishing_detected": true/false,\n'
-        '  "confidence_score": 0 to 100,\n'
+        '  "phishing_probability_score": 0 to 100 (0 = completely safe, 100 = definite phishing),\n'
         '  "impersonated_brand": "Brand Name or None",\n'
         '  "threat_indicators": ["List of suspicious cues found in image"],\n'
         '  "extracted_urls": ["List of URLs found"],\n'
@@ -188,7 +188,12 @@ def analyze_screenshot(image_bytes, filename="", groq_api_key=None):
         report["summary"] = vision_result.get("summary_verdict", "")
         report["ai_analysis_available"] = True
 
-        base_score = float(vision_result.get("confidence_score", 0.0))
+        base_score = float(vision_result.get("phishing_probability_score", vision_result.get("confidence_score", 0.0)))
+        
+        # Override to 0 if definitely not phishing, but model gave weird score
+        if not vision_result.get("is_phishing_detected") and base_score > 50:
+            base_score = 0.0
+            
         if vision_result.get("is_phishing_detected"):
             base_score = max(base_score, 75.0)
         report["threat_score"] = base_score
