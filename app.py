@@ -102,7 +102,7 @@ def load_ml_components():
 
 # Database Initialization
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=20)
     conn.execute("PRAGMA journal_mode=WAL;")
     cursor = conn.cursor()
     
@@ -414,7 +414,7 @@ def calculate_risk_level(score):
 
 # --- System Audit Logger ---
 def log_activity(user_id, action):
-    conn = sqlite3.connect(DB_PATH, timeout=10)
+    conn = sqlite3.connect(DB_PATH, timeout=20)
     c = conn.cursor()
     c.execute("PRAGMA journal_mode=WAL;")
     c.execute("INSERT INTO logs (user_id, action) VALUES (?, ?)", (user_id, action))
@@ -461,7 +461,7 @@ def register():
         hashed_password = generate_password_hash(password)
         
         try:
-            conn = sqlite3.connect(DB_PATH)
+            conn = sqlite3.connect(DB_PATH, timeout=20)
             c = conn.cursor()
             c.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", 
                       (username, email, hashed_password))
@@ -482,7 +482,7 @@ def login():
         username = request.form['username'].strip()
         password = request.form['password']
         
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=20)
         c = conn.cursor()
         c.execute("SELECT * FROM users WHERE username = ?", (username,))
         user = c.fetchone()
@@ -506,7 +506,7 @@ def profile():
         return redirect(url_for('login'))
         
     user_id = session['user_id']
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=20)
     c = conn.cursor()
     
     if request.method == 'POST':
@@ -560,7 +560,7 @@ def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=20)
     c = conn.cursor()
     
 # Form Inference Processing
@@ -757,7 +757,7 @@ def scan_website_endpoint():
     result = analyze_website(target_url)
 
     # Save to history database
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=20)
     c = conn.cursor()
     c.execute(
         "INSERT INTO history (user_id, input_type, content, score, risk_level) VALUES (?, ?, ?, ?, ?)",
@@ -840,7 +840,7 @@ def scan_screenshot_endpoint():
 
     # Save to history database
     db_content = f"Screenshot: {file.filename} (Brand: {result.get('impersonated_brand', 'None')})"
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=20)
     c = conn.cursor()
     c.execute(
         "INSERT INTO history (user_id, input_type, content, score, risk_level) VALUES (?, ?, ?, ?, ?)",
@@ -867,7 +867,7 @@ def export_report(history_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=20)
     c = conn.cursor()
     c.execute("SELECT * FROM history WHERE id = ? AND user_id = ?", (history_id, session['user_id']))
     record = c.fetchone()
@@ -1218,7 +1218,7 @@ def admin_panel():
     if 'role' not in session or session['role'] != 'admin':
         return "Access Violation. Privileged personnel authorization vector required.", 403
         
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=20)
     c = conn.cursor()
     
     c.execute("SELECT id, username, email, role FROM users")
@@ -1241,7 +1241,7 @@ def delete_user(user_id):
         return redirect(url_for('login'))
         
     try:
-        conn = sqlite3.connect(DB_PATH, timeout=15)
+        conn = sqlite3.connect(DB_PATH, timeout=20)
         conn.execute("PRAGMA journal_mode=WAL;")
         c = conn.cursor()
         
@@ -1281,7 +1281,7 @@ def delete_history(id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=20)
     c = conn.cursor()
     # Ensure the user only deletes their own data!
     c.execute("DELETE FROM history WHERE id = ? AND user_id = ?", (id, session['user_id']))
