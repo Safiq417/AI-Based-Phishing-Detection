@@ -8,9 +8,9 @@ from PIL import Image
 from urllib.parse import urlparse
 
 DEFAULT_VISION_MODELS = [
-    os.environ.get("GROQ_VISION_MODEL", "llama-3.2-90b-vision-preview"),
-    "llama-3.2-11b-vision-preview",
-    "qwen/qwen3.6-27b",
+    os.environ.get("GROQ_VISION_MODEL", "qwen/qwen3.8-27b"),
+    "groq/compound",
+    "groq/compound-mini",
     "meta-llama/llama-4-scout-17b-16e-instruct"
 ]
 
@@ -78,7 +78,7 @@ def call_groq_vision_api(base64_image, groq_api_key):
     prompt = (
         "You are an expert Cyber Threat & Digital Forensics Analyst inspecting an uploaded screenshot (e.g. email, SMS, fake login page, or QR code).\n"
         "Extract all readable text, analyze social engineering tactics, look for brand impersonation (e.g. SBI, HDFC, PayPal, Netflix, Google), and identify any suspicious URLs or phone numbers.\n\n"
-        "Respond ONLY in valid JSON matching this exact schema:\n"
+        "Respond ONLY in valid json matching this exact schema:\n"
         "{\n"
         '  "extracted_text": "Full text transcript found in the image",\n'
         '  "is_phishing_detected": true/false,\n'
