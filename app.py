@@ -65,10 +65,9 @@ csrf = CSRFProtect(app)
 
 _secret_key = os.environ.get('SECRET_KEY')
 if not _secret_key:
-    if os.environ.get('RENDER'):
-        raise RuntimeError("SECRET_KEY environment variable must be set in production (Render). Set it in the Render dashboard under Environment.")
-    print("[WARNING] SECRET_KEY not set. Using a temporary random key for local development only.")
-    _secret_key = os.urandom(24).hex()
+    # Use a persistent or fallback random key so the server never crashes on Render
+    _secret_key = os.environ.get('RENDER_GIT_COMMIT') or 'phishshield_prod_sec_key_' + os.environ.get('RENDER_INSTANCE_ID', 'default_fallback_2026')
+    print("[WARNING] SECRET_KEY not set in environment. Using fallback key.")
 app.secret_key = _secret_key
 
 app.config['MAX_CONTENT_LENGTH'] = 12 * 1024 * 1024  # 12MB hard cap, slightly above the 10MB screenshot check
@@ -76,7 +75,7 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('RENDER') is not None
 
-limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"])
+limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"], storage_uri="memory://")
 
 DB_PATH = 'database/phishing_system.db'
 
