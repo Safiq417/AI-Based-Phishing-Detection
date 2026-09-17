@@ -869,6 +869,26 @@ def scan_screenshot_endpoint():
     flash(f"Screenshot Analysis Complete: {result['risk_level']} ({result['threat_score']:.1f}% Risk Score)", "success" if result['is_safe'] else "danger")
     return redirect(url_for('dashboard'))
 
+@app.route('/api/scan/url', methods=['POST'])
+@csrf.exempt
+def api_scan_url():
+    """API Endpoint exclusively for the Chrome Extension"""
+    data = request.json
+    if not data or 'url' not in data:
+        return jsonify({"error": "Missing URL"}), 400
+    
+    target_url = data['url'].strip()
+    result = analyze_website(target_url)
+    
+    # Return minimal JSON for the extension
+    return jsonify({
+        "url": target_url,
+        "risk_level": result["risk_level"],
+        "threat_score": result["threat_score"],
+        "is_safe": result["is_safe"],
+        "reasons": result.get("reasons", [])
+    })
+
 @app.route('/export/<int:history_id>')
 def export_report(history_id):
     if 'user_id' not in session:
