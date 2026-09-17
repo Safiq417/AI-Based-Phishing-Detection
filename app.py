@@ -500,6 +500,54 @@ def login():
             
     return render_template('login.html')
 
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    user_id = session['user_id']
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    
+    if request.method == 'POST':
+        new_password = request.form.get('new_password')
+        if new_password:
+            if len(new_password) < 8:
+                flash("Password must be at least 8 characters long.", "danger")
+            elif new_password.isalpha() or new_password.isdigit():
+                flash("Password must contain both letters and numbers.", "danger")
+            else:
+                hashed_pw = generate_password_hash(new_password)
+                c.execute("UPDATE users SET password = ? WHERE id = ?", (hashed_pw, user_id))
+                conn.commit()
+                flash("Password updated successfully.", "success")
+                log_activity(user_id, "User updated their password.")
+        return redirect(url_for('profile'))
+
+    # Fetch User Info
+    c.execute("SELECT username, email, role FROM users WHERE id = ?", (user_id,))
+    user_info = c.fetchone()
+    
+    # Fetch Scan Stats
+    c.execute("SELECT COUNT(*) FROM history WHERE user_id = ?", (user_id,))
+    total_scans = c.fetchone()[0]
+    
+    c.execute("SELECT COUNT(*) FROM history WHERE user_id = ? AND risk_level = 'Critical'", (user_id,))
+    critical_scans = c.fetchone()[0]
+    
+    c.execute("SELECT COUNT(*) FROM history WHERE user_id = ? AND risk_level = 'Safe'", (user_id,))
+    safe_scans = c.fetchone()[0]
+    
+    conn.close()
+    
+    stats = {
+        'total': total_scans,
+        'critical': critical_scans,
+        'safe': safe_scans
+    }
+    
+    return render_template('profile.html', user=user_info, stats=stats)
+
 @app.route('/logout')
 def logout():
     if 'user_id' in session:
@@ -1356,9 +1404,6 @@ def ai_chat():
         return jsonify({'error': 'Invalid API key. Please check your GROQ_API_KEY in .env or console.groq.com.'}), 500
     return jsonify({'error': f'AI service error: {last_error}'}), 500
 
-@app.route('/demo')
-def demo_presentation():
-    return render_template('demo.html')
 
 if __name__ == '__main__':
     # Fallback initialization check
