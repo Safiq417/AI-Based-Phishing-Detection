@@ -36,7 +36,11 @@ from screenshot_analyzer import analyze_screenshot
 
 def get_groq_api_key():
     load_env_variables()
-    return os.environ.get('GROQ_API_KEY') or os.environ.get('GROK_API_KEY') or os.environ.get('XAI_API_KEY') or os.environ.get('PhishShield_Vision_OCR') or os.environ.get('GROQ_VISION_KEY') or ''
+    return os.environ.get('GROQ_API_KEY') or os.environ.get('GROK_API_KEY') or os.environ.get('XAI_API_KEY') or ''
+
+def get_vision_api_key():
+    load_env_variables()
+    return os.environ.get('PhishShield_Vision_OCR') or os.environ.get('PhishShield_Visio') or os.environ.get('GROQ_VISION_KEY') or get_groq_api_key()
 
 def get_virustotal_api_key():
     load_env_variables()
@@ -811,7 +815,7 @@ def scan_screenshot_endpoint():
         return jsonify({'error': 'File size exceeds 10MB limit.'}), 400
 
     # Run Screenshot Vision / OCR Analysis
-    current_ai_key = get_groq_api_key()
+    current_ai_key = get_vision_api_key()
     result = analyze_screenshot(file_bytes, filename=file.filename, groq_api_key=current_ai_key)
     
     if not result.get("ai_analysis_available", True):

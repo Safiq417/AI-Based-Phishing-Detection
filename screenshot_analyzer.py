@@ -8,7 +8,9 @@ from PIL import Image
 from urllib.parse import urlparse
 
 DEFAULT_VISION_MODELS = [
-    os.environ.get("GROQ_VISION_MODEL", "qwen/qwen3.6-27b"),
+    os.environ.get("GROQ_VISION_MODEL", "llama-3.2-90b-vision-preview"),
+    "llama-3.2-11b-vision-preview",
+    "qwen/qwen3.6-27b",
     "meta-llama/llama-4-scout-17b-16e-instruct"
 ]
 
@@ -62,7 +64,7 @@ def get_vision_api_key():
                             os.environ[k] = v
         except Exception:
             pass
-    return os.environ.get('PhishShield_Vision_OCR') or os.environ.get('VISION_API_KEY') or os.environ.get('GROQ_VISION_KEY') or os.environ.get('GROQ_API_KEY') or os.environ.get('GROK_API_KEY') or os.environ.get('XAI_API_KEY') or ''
+    return os.environ.get('PhishShield_Vision_OCR') or os.environ.get('PhishShield_Visio') or os.environ.get('VISION_API_KEY') or os.environ.get('GROQ_VISION_KEY') or os.environ.get('GROQ_API_KEY') or os.environ.get('GROK_API_KEY') or os.environ.get('XAI_API_KEY') or ''
 
 def call_groq_vision_api(base64_image, groq_api_key):
     """
@@ -194,7 +196,7 @@ def analyze_screenshot(image_bytes, filename="", groq_api_key=None):
     else:
         # Fallback heuristic analysis (e.g. when offline or API key missing)
         report["analysis_engine"] = "Local Heuristic Pattern Engine"
-        report["extracted_text"] = "Image processed via local heuristic parser (Add GROQ_API_KEY for deep Multimodal OCR)."
+        report["extracted_text"] = "Image processed via local heuristic parser (Vision API Key missing, invalid, or rate-limited)."
         report["ai_analysis_available"] = False
         
         # Check image metadata / dimensions / aspect ratio
