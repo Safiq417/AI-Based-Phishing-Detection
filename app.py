@@ -874,8 +874,13 @@ def scan_screenshot_endpoint():
     flash(f"Screenshot Analysis Complete: {result['risk_level']} ({result['threat_score']:.1f}% Risk Score)", "success" if result['is_safe'] else "danger")
     return redirect(url_for('dashboard'))
 
+# Simple in-memory cache to speed up repeated extension scans (1 hour TTL)
+API_SCAN_CACHE = {}
+CACHE_TTL = 3600 
+
 @app.route('/api/scan/url', methods=['POST'])
 @csrf.exempt
+@limiter.limit("20 per minute")  # DDoS Protection
 def api_scan_url():
     """API Endpoint exclusively for the Chrome Extension"""
     data = request.json
@@ -883,16 +888,32 @@ def api_scan_url():
         return jsonify({"error": "Missing URL"}), 400
     
     target_url = data['url'].strip()
+    current_time = time.time()
+    
+    # 1. Check Cache for Super-Fast Response
+    if target_url in API_SCAN_CACHE:
+        cached_data = API_SCAN_CACHE[target_url]
+        if current_time - cached_data['timestamp'] < CACHE_TTL:
+            return jsonify(cached_data['result'])
+            
+    # 2. Run Heavy Analysis if not cached
     result = analyze_website(target_url)
     
-    # Return minimal JSON for the extension
-    return jsonify({
+    response_data = {
         "url": target_url,
         "risk_level": result["risk_level"],
         "threat_score": result["threat_score"],
         "is_safe": result["is_safe"],
         "reasons": result.get("reasons", [])
-    })
+    }
+    
+    # Save to Cache
+    API_SCAN_CACHE[target_url] = {
+        'result': response_data,
+        'timestamp': current_time
+    }
+    
+    return jsonify(response_data)
 
 @app.route('/export/<int:history_id>')
 def export_report(history_id):
