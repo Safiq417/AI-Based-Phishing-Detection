@@ -179,7 +179,7 @@
 </div>
 
 <!-- Floating AI Toggle Button (Fixed bottom-right, rock-solid) -->
-<button id="chatToggleBtn" type="button" aria-expanded="false" aria-label="Open PhishShield AI Assistant" class="fixed right-4 bottom-4 sm:right-6 sm:bottom-6 z-50 inline-flex items-center gap-2 rounded-full bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white px-4 py-3 text-xs sm:text-sm font-bold text-white dark:text-slate-900 shadow-2xl shadow-blue-500/25 ring-1 ring-white/20 transition-all duration-200 transform hover:scale-105 active:scale-95 cursor-pointer">
+<button id="chatToggleBtn" type="button" aria-expanded="false" aria-label="Open PhishShield AI Assistant" class="fixed right-4 bottom-4 sm:right-8 sm:bottom-8 z-50 inline-flex items-center gap-2 rounded-full bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white px-4 py-3 text-xs sm:text-sm font-bold text-white dark:text-slate-900 shadow-2xl shadow-blue-500/25 ring-1 ring-white/20 transition-all duration-200 transform hover:scale-105 active:scale-95 cursor-pointer">
     <span>PhishShield AI</span>
     <span class="inline-flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -190,7 +190,7 @@
 </button>
 
 <!-- Standalone Chat Window (Fixed directly above floating button) -->
-<div id="chatPanel" class="fixed right-3 bottom-16 sm:right-6 sm:bottom-20 z-50 hidden w-[calc(100vw-24px)] sm:w-[380px] max-w-[96vw] rounded-[1.5rem] border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl shadow-2xl shadow-slate-900/30 ring-1 ring-black/5 dark:ring-white/10 overflow-hidden flex flex-col select-text transition-all duration-200">
+<div id="chatPanel" class="fixed right-3 bottom-16 sm:right-8 sm:bottom-24 z-50 hidden w-[calc(100vw-24px)] sm:w-[380px] max-w-[96vw] rounded-[1.5rem] border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl shadow-2xl shadow-slate-900/30 ring-1 ring-black/5 dark:ring-white/10 overflow-hidden flex flex-col select-text transition-all duration-200">
     <!-- Header -->
     <div id="chatPanelHeader" class="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/80 px-4 py-3 text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 select-none">
         <div class="flex items-center gap-2">
