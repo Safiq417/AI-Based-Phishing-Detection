@@ -712,9 +712,13 @@ def dashboard():
         if input_type == 'text' and ai_analysis and ai_analysis.get('verdict'):
             breakdown_parts.append(f"AI Verdict: {ai_analysis['verdict']}")
         breakdown_parts.append(f"Final Combined Score: {base_score:.1f}% ({risk_level})")
-        reasons.insert(0, "SCORE BREAKDOWN — " + " | ".join(breakdown_parts))
-        if reasons:
-            flash("Analysis reasons: " + "; ".join(reasons), "success")
+        reasons.insert(0, "SCORE BREAKDOWN:\n• " + "\n• ".join(breakdown_parts) + "\n\nDETAILED OBSERVATIONS:")
+        flash_category = "success" if base_score < 20 else "danger"
+        if len(reasons) > 1:
+            flash("\n- ".join(reasons), flash_category)
+        else:
+            flash(reasons[0], flash_category)
+            
         c.execute("INSERT INTO history (user_id, input_type, content, score, risk_level) VALUES (?, ?, ?, ?, ?)",
                   (session['user_id'], input_type, content, base_score, risk_level))
         conn.commit()

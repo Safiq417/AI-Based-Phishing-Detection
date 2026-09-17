@@ -379,7 +379,7 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="p-4 mb-6 rounded-lg font-medium text-center shadow-sm border 
+                    <div class="p-4 mb-6 rounded-lg font-medium text-left whitespace-pre-line shadow-sm border 
                         {% if category == 'danger' %} bg-red-50 text-red-700 border-red-200 
                         {% else %} bg-green-50 text-green-700 border-green-200 {% endif %}">
                         {{ message }}
