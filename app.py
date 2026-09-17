@@ -1275,6 +1275,37 @@ def delete_user(user_id):
         
     return redirect(url_for('admin_panel'))
 
+@app.route('/admin/wipe', methods=['POST'])
+def admin_wipe_data():
+    if 'role' not in session or session['role'] != 'admin':
+        flash("Access Denial: Admin authorization required.", "danger")
+        return redirect(url_for('login'))
+        
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20)
+        c = conn.cursor()
+        
+        # Delete all non-admin users and their data
+        c.execute("DELETE FROM reports WHERE history_id IN (SELECT id FROM history WHERE user_id IN (SELECT id FROM users WHERE role != 'admin'))")
+        c.execute("DELETE FROM history WHERE user_id IN (SELECT id FROM users WHERE role != 'admin')")
+        c.execute("DELETE FROM logs WHERE user_id IN (SELECT id FROM users WHERE role != 'admin')")
+        c.execute("DELETE FROM users WHERE role != 'admin'")
+        
+        # Also clean up any orphaned data just in case
+        c.execute("DELETE FROM reports WHERE history_id NOT IN (SELECT id FROM history)")
+        c.execute("DELETE FROM history WHERE user_id NOT IN (SELECT id FROM users)")
+        
+        conn.commit()
+        conn.close()
+        
+        log_activity(session['user_id'], "EMERGENCY WIPE: Deleted all non-admin users, history, reports, and logs.")
+        flash("Emergency Wipe Complete: All non-admin data has been permanently deleted.", "success")
+    except Exception as e:
+        print(f"Error during emergency wipe: {e}")
+        flash("An error occurred during the data wipe process.", "danger")
+        
+    return redirect(url_for('admin_panel'))
+
 @app.route('/delete/<int:id>', methods=['GET', 'POST'])
 def delete_history(id):
     if 'user_id' not in session:

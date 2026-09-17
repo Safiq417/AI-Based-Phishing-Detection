@@ -4,28 +4,28 @@
 {% block content %}
 <div class="max-w-4xl mx-auto space-y-8 animate-fade-in-up">
     <!-- Header -->
-    <div class="glass-panel p-8 rounded-3xl relative overflow-hidden border border-slate-700/50 shadow-2xl">
+    <div class="glass-panel p-8 rounded-3xl relative overflow-hidden border border-slate-200 dark:border-slate-700/50 shadow-2xl">
         <div class="absolute -right-20 -top-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute -left-20 -bottom-20 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
         
         <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
             <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 p-1 shadow-lg shadow-blue-500/20 shrink-0">
-                <div class="w-full h-full bg-slate-900 rounded-xl flex items-center justify-center text-4xl font-bold text-white">
+                <div class="w-full h-full bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-4xl font-bold text-slate-800 dark:text-white">
                     {{ user[0][0]|upper }}
                 </div>
             </div>
             
             <div class="text-center md:text-left flex-1">
                 <div class="flex flex-col md:flex-row md:items-center gap-3 mb-2">
-                    <h1 class="text-3xl font-extrabold text-white tracking-tight">{{ user[0] }}</h1>
+                    <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{{ user[0] }}</h1>
                     {% if user[2] == 'admin' %}
-                        <span class="px-3 py-1 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-full text-xs font-bold uppercase tracking-wider self-center">Administrator</span>
+                        <span class="px-3 py-1 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30 rounded-full text-xs font-bold uppercase tracking-wider self-center">Administrator</span>
                     {% else %}
-                        <span class="px-3 py-1 bg-slate-500/20 text-slate-300 border border-slate-500/30 rounded-full text-xs font-bold uppercase tracking-wider self-center">Standard User</span>
+                        <span class="px-3 py-1 bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-500/30 rounded-full text-xs font-bold uppercase tracking-wider self-center">Standard User</span>
                     {% endif %}
                 </div>
-                <p class="text-slate-400 font-mono text-sm mb-4">{{ user[1] }}</p>
-                <div class="inline-flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20">
+                <p class="text-slate-500 dark:text-slate-400 font-mono text-sm mb-4">{{ user[1] }}</p>
+                <div class="inline-flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-500/20">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     Account Active & Secure
                 </div>
@@ -35,26 +35,26 @@
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="glass-panel p-6 rounded-2xl border border-slate-700/50 flex flex-col items-center justify-center text-center">
+        <div class="glass-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 flex flex-col items-center justify-center text-center">
             <span class="text-4xl mb-2">🛡️</span>
-            <div class="text-3xl font-bold text-white mb-1">{{ stats.total }}</div>
-            <div class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Total Scans</div>
+            <div class="text-3xl font-bold text-slate-900 dark:text-white mb-1">{{ stats.total }}</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">Total Scans</div>
         </div>
-        <div class="glass-panel p-6 rounded-2xl border border-rose-500/20 bg-rose-950/10 flex flex-col items-center justify-center text-center">
+        <div class="glass-panel p-6 rounded-2xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-950/10 flex flex-col items-center justify-center text-center">
             <span class="text-4xl mb-2">🔥</span>
-            <div class="text-3xl font-bold text-rose-400 mb-1">{{ stats.critical }}</div>
-            <div class="text-xs text-rose-500/80 uppercase tracking-widest font-semibold">Critical Threats</div>
+            <div class="text-3xl font-bold text-rose-700 dark:text-rose-400 mb-1">{{ stats.critical }}</div>
+            <div class="text-xs text-rose-600 dark:text-rose-500/80 uppercase tracking-widest font-semibold">Critical Threats</div>
         </div>
-        <div class="glass-panel p-6 rounded-2xl border border-emerald-500/20 bg-emerald-950/10 flex flex-col items-center justify-center text-center">
+        <div class="glass-panel p-6 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-950/10 flex flex-col items-center justify-center text-center">
             <span class="text-4xl mb-2">✅</span>
-            <div class="text-3xl font-bold text-emerald-400 mb-1">{{ stats.safe }}</div>
-            <div class="text-xs text-emerald-500/80 uppercase tracking-widest font-semibold">Safe URLs</div>
+            <div class="text-3xl font-bold text-emerald-700 dark:text-emerald-400 mb-1">{{ stats.safe }}</div>
+            <div class="text-xs text-emerald-600 dark:text-emerald-500/80 uppercase tracking-widest font-semibold">Safe URLs</div>
         </div>
     </div>
 
     <!-- Security Settings -->
-    <div class="glass-panel p-8 rounded-3xl border border-slate-700/50 relative overflow-hidden">
-        <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+    <div class="glass-panel p-8 rounded-3xl border border-slate-200 dark:border-slate-700/50 relative overflow-hidden">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
             <span>🔒</span> Security Settings
         </h2>
         
@@ -62,8 +62,8 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             
             <div>
-                <label class="block text-sm font-medium text-slate-300 mb-1">Update Password</label>
-                <input type="password" name="new_password" required placeholder="Enter new password" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Update Password</label>
+                <input type="password" name="new_password" required placeholder="Enter new password" class="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all">
                 <p class="text-xs text-slate-500 mt-2">Must be at least 8 characters and contain both letters and numbers.</p>
             </div>
             
