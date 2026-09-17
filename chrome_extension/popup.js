@@ -6,12 +6,16 @@ let currentTabUrl = "";
 
 // Get current tab URL when popup opens
 chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-    let tab = tabs[0];
-    currentTabUrl = tab.url;
-    
-    // Truncate URL for display
-    let displayUrl = currentTabUrl.length > 50 ? currentTabUrl.substring(0, 47) + "..." : currentTabUrl;
-    document.getElementById("currentUrl").innerText = displayUrl;
+    if (tabs && tabs[0] && tabs[0].url) {
+        currentTabUrl = tabs[0].url;
+        // Truncate URL for display
+        let displayUrl = currentTabUrl.length > 50 ? currentTabUrl.substring(0, 47) + "..." : currentTabUrl;
+        document.getElementById("currentUrl").innerText = displayUrl;
+    } else {
+        currentTabUrl = "";
+        document.getElementById("currentUrl").innerText = "Cannot scan this restricted page.";
+        document.getElementById("scanBtn").disabled = true;
+    }
 });
 
 document.getElementById("scanBtn").addEventListener("click", async () => {
