@@ -650,7 +650,8 @@
             const pdfLink = scanData.pdf_url ? `<a href="${scanData.pdf_url}" target="_blank" class="text-blue-600 dark:text-blue-400 font-semibold hover:underline text-xs">PDF</a>` : `<span class="text-slate-400 text-xs">-</span>`;
             const deleteLink = scanData.delete_url ? `<a href="${scanData.delete_url}" class="text-red-500 dark:text-red-400 font-semibold hover:underline text-xs" onclick="return confirm('Delete this scan?')">Delete</a>` : '';
 
-            const excerpt = scanData.hostname || scanData.target_url || scanData.filename || 'Scan result';
+            const rawExcerpt = scanData.hostname || scanData.target_url || scanData.filename || 'Scan result';
+            const excerpt = rawExcerpt.replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const typeLabel = (scanData.input_type || (scanData.ssl ? 'WEBSITE_DEEP_SCAN' : 'SCREENSHOT_OCR')).toUpperCase();
 
             tr.innerHTML = `
