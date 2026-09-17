@@ -531,10 +531,10 @@ def profile():
     c.execute("SELECT COUNT(*) FROM history WHERE user_id = ?", (user_id,))
     total_scans = c.fetchone()[0]
     
-    c.execute("SELECT COUNT(*) FROM history WHERE user_id = ? AND risk_level = 'Critical'", (user_id,))
+    c.execute("SELECT COUNT(*) FROM history WHERE user_id = ? AND risk_level LIKE '%Critical%'", (user_id,))
     critical_scans = c.fetchone()[0]
     
-    c.execute("SELECT COUNT(*) FROM history WHERE user_id = ? AND risk_level = 'Safe'", (user_id,))
+    c.execute("SELECT COUNT(*) FROM history WHERE user_id = ? AND risk_level LIKE '%Safe%'", (user_id,))
     safe_scans = c.fetchone()[0]
     
     conn.close()
@@ -722,7 +722,7 @@ def dashboard():
     c.execute("SELECT COUNT(*) FROM history WHERE user_id = ?", (session['user_id'],))
     total_scans = c.fetchone()[0]
     
-    c.execute("SELECT COUNT(*) FROM history WHERE user_id = ? AND risk_level IN ('High Risk', 'Critical')", (session['user_id'],))
+    c.execute("SELECT COUNT(*) FROM history WHERE user_id = ? AND (risk_level LIKE '%High%' OR risk_level LIKE '%Critical%')", (session['user_id'],))
     total_threats = c.fetchone()[0]
     
     c.execute("SELECT * FROM history WHERE user_id = ? ORDER BY timestamp DESC LIMIT 10", (session['user_id'],))
