@@ -531,6 +531,11 @@ def profile():
     c.execute("SELECT username, email, role FROM users WHERE id = ?", (user_id,))
     user_info = c.fetchone()
     
+    if user_info is None:
+        conn.close()
+        session.clear()
+        return redirect(url_for('login'))
+    
     # Fetch Scan Stats
     c.execute("SELECT COUNT(*) FROM history WHERE user_id = ?", (user_id,))
     total_scans = c.fetchone()[0]
