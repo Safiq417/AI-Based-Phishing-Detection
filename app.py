@@ -419,7 +419,6 @@ def calculate_risk_level(score):
 def log_activity(user_id, action):
     conn = sqlite3.connect(DB_PATH, timeout=20)
     c = conn.cursor()
-    c.execute("PRAGMA journal_mode=WAL;")
     c.execute("INSERT INTO logs (user_id, action) VALUES (?, ?)", (user_id, action))
     conn.commit()
     conn.close()
@@ -525,6 +524,7 @@ def profile():
                 conn.commit()
                 flash("Password updated successfully.", "success")
                 log_activity(user_id, "User updated their password.")
+        conn.close()
         return redirect(url_for('profile'))
 
     # Fetch User Info
@@ -1295,7 +1295,6 @@ def delete_user(user_id):
         
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20)
-        conn.execute("PRAGMA journal_mode=WAL;")
         c = conn.cursor()
         
         # Check if target user exists and is not admin
