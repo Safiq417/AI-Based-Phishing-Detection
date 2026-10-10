@@ -3,15 +3,25 @@ import re
 from urllib.parse import urlparse
 from collections import Counter
 
+import os
+
 # Common popular/whitelisted domains to prevent false positives
-WHITELISTED_DOMAINS = {
-    'google.com', 'youtube.com', 'facebook.com', 'amazon.com', 'wikipedia.org',
-    'twitter.com', 'instagram.com', 'linkedin.com', 'microsoft.com', 'apple.com',
-    'netflix.com', 'github.com', 'cloudflare.com', 'wordpress.org', 'yahoo.com',
-    'bing.com', 'reddit.com', 'pinterest.com', 'ebay.com', 'paypal.com',
-    'sbi.co.in', 'hdfcbank.com', 'icicibank.com', 'axisbank.com', 'whatsapp.com',
-    'zoom.us', 'dropbox.com', 'adobe.com', 'spotify.com', 'quora.com'
-}
+WHITELISTED_DOMAINS = set()
+WHITELIST_FILE = 'database/tranco_whitelist.txt'
+
+if os.path.exists(WHITELIST_FILE):
+    with open(WHITELIST_FILE, 'r', encoding='utf-8') as f:
+        WHITELISTED_DOMAINS = set(line.strip() for line in f if line.strip())
+else:
+    # Fallback to default
+    WHITELISTED_DOMAINS = {
+        'google.com', 'youtube.com', 'facebook.com', 'amazon.com', 'wikipedia.org',
+        'twitter.com', 'instagram.com', 'linkedin.com', 'microsoft.com', 'apple.com',
+        'netflix.com', 'github.com', 'cloudflare.com', 'wordpress.org', 'yahoo.com',
+        'bing.com', 'reddit.com', 'pinterest.com', 'ebay.com', 'paypal.com',
+        'sbi.co.in', 'hdfcbank.com', 'icicibank.com', 'axisbank.com', 'whatsapp.com',
+        'zoom.us', 'dropbox.com', 'adobe.com', 'spotify.com', 'quora.com'
+    }
 
 # Multi-part top-level domains for accurate SLD (Second-Level Domain) extraction
 COMMON_MULTI_TLDS = {
