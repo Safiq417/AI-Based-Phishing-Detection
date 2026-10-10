@@ -333,6 +333,11 @@
     // AJAX: Submit Website Deep Inspection
     async function submitWebsiteScan(event) {
         event.preventDefault();
+        
+        // Hide any old static flash messages from a previous page load
+        const flashContainer = document.getElementById('flash-messages-container');
+        if (flashContainer) { flashContainer.style.display = 'none'; }
+        
         const urlInput = document.getElementById('websiteUrlInput').value.trim();
         if (!urlInput) return;
 
@@ -367,6 +372,7 @@
 
     // AJAX: Submit Screenshot OCR Inspection
     async function submitScreenshotScan(event) {
+        const flashContainer = document.getElementById('flash-messages-container'); if (flashContainer) { flashContainer.style.display = 'none'; }
         event.preventDefault();
         if (!selectedScreenshotFile) return;
 
