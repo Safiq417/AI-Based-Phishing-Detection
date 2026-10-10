@@ -205,7 +205,7 @@ def analyze_website(target_input):
     if parsed.scheme == 'https':
         report["ssl"] = get_ssl_telemetry(hostname, port)
         if report["ssl"].get("error"):
-            report["threat_score"] += 25.0
+            report["threat_score"] += 10.0
             report["reasons"].append(f"SSL Warning: {report['ssl']['error']}")
         elif report["ssl"].get("is_expired"):
             report["threat_score"] += 30.0
@@ -216,7 +216,7 @@ def analyze_website(target_input):
 
     # 4. STRICT PASSIVE HTTP GET WITH REDIRECT LIMIT & TIMEOUT
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 PhishShieldBot/2.0'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
     }
 
     try:
@@ -224,8 +224,8 @@ def analyze_website(target_input):
         session.max_redirects = 3
         start_time = datetime.utcnow()
         
-        # Follow redirects manually or with strict timeout (5s)
-        resp = session.get(url, headers=headers, timeout=5, allow_redirects=True)
+        # Follow redirects manually or with strict timeout (10s)
+        resp = session.get(url, headers=headers, timeout=10, allow_redirects=True)
         latency_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
         
         report["http_status"] = resp.status_code
@@ -336,11 +336,11 @@ def analyze_website(target_input):
             report["dom_forensics"]["external_scripts"] = ext_scripts
 
     except requests.exceptions.SSLError as e:
-        report["threat_score"] += 35.0
+        report["threat_score"] += 15.0
         report["reasons"].append(f"SSL Handshake Failure: {str(e)}")
     except requests.exceptions.Timeout:
-        report["threat_score"] += 20.0
-        report["reasons"].append("Connection timed out (> 5s). Server might be tarpitted or unreachable.")
+        report["threat_score"] += 10.0
+        report["reasons"].append("Connection timed out (> 10s). Server might be tarpitted or unreachable.")
     except requests.exceptions.TooManyRedirects:
         report["threat_score"] += 30.0
         report["reasons"].append("Too many redirects (> 3 hops). Redirection loop detected.")
