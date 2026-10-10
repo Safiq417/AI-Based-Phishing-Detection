@@ -1,4 +1,4 @@
-﻿# 🛡️ PhishShield AI
+# 🛡️ PhishShield AI
 **Enterprise-Grade Phishing Detection, Browser Security & Digital Forensics Platform**
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
@@ -26,8 +26,9 @@ PhishShield AI is an intelligent cyber defense ecosystem that utilizes multimoda
 
 ### 🌐 3. Tri-Layer Website Inspector
 * **Lexical Mutation Parsing:** Detects IP-based routing, URL shortening abuse, excessive subdomains, and obfuscated paths.
-* **Machine Learning:** Evaluates Shannon entropy, vowel-to-consonant ratios, and unusual consonant clusters to flag Algorithmically Generated Domains (DGA) used by botnets.
+* **DGA Detector:** Actively filters against a dynamic **Tranco Top 100,000 Global Whitelist**. Evaluates Shannon entropy, vowel-to-consonant ratios, and unusual consonant clusters to flag Algorithmically Generated Domains (DGA) used by botnets.
 * **Passive SSL & Geo-IP Recon:** Safely extracts SSL certificate validity and server geolocations without directly risking the client.
+* **Machine Learning Engine (NLP):** Uses **TF-IDF Vectorization** and **Multinomial Naive Bayes** trained on a robust **5,500+ SMS/Email spam dataset** to detect manipulative language and false urgency.
 
 ### 🤖 4. Intelligent Cyber Assistant (AI Chat)
 * Features an embedded, context-aware cybersecurity chatbot in the dashboard.
@@ -40,10 +41,10 @@ PhishShield AI is an intelligent cyber defense ecosystem that utilizes multimoda
 ---
 
 ## 🔒 Security & Scalability Architecture
+* **Database Modernization (ORM):** Fully migrated to **Flask-SQLAlchemy**, neutralizing SQL Injection vulnerabilities and enabling seamless scaling to enterprise SQL databases.
 * **API Protection:** The extension API is fortified with Rate Limiting (Flask-Limiter) to prevent DDoS and spam.
 * **Memory Caching:** 1-hour TTL caching for URLs ensures zero-latency responses for repeated scans.
-* **Protection Mechanisms:** Fully integrated CSRF tokens (Flask-WTF), strict Content Security Policies (CSP), XSS sanitization, and SQL Injection prevention.
-* **Concurrency Safe:** Utilizes SQLite WAL (Write-Ahead Logging) to ensure database stability.
+* **Protection Mechanisms:** Fully integrated CSRF tokens (Flask-WTF), strict Content Security Policies (CSP), and XSS sanitization.
 
 ---
 
@@ -86,7 +87,7 @@ ADMIN_PASSWORD=your_secure_password
 
 ### 4. Run the Backend Server
 ```bash
-python app.py
+python app_sqlalchemy.py
 ```
 *The server will start at `http://127.0.0.1:5000`.*
 
