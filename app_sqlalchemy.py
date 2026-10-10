@@ -869,6 +869,122 @@ def api_scan_url():
     
     return jsonify(response_data)
 
+@app.route('/api/scan_screenshot', methods=['POST'])
+@limiter.limit("10 per minute")
+def api_scan_screenshot():
+    """API Endpoint exclusively for the Mobile App OCR (No session required)"""
+    if 'screenshot' not in request.files:
+        return jsonify({'error': 'No screenshot image file uploaded.'}), 400
+
+    file = request.files['screenshot']
+    if file.filename == '':
+        return jsonify({'error': 'Empty filename uploaded.'}), 400
+        
+    ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'}
+    _ext = os.path.splitext(file.filename)[1].lower()
+    if _ext not in ALLOWED_IMAGE_EXTENSIONS:
+        return jsonify({'error': f'Unsupported file type: {_ext}. Allowed types: png, jpg, jpeg, webp, gif, bmp'}), 400
+
+    # Ensure uploads dir exists
+    if not os.path.exists('uploads'):
+        os.makedirs('uploads')
+
+    filename = secure_filename(file.filename)
+    unique_filename = f"{uuid.uuid4().hex}_{filename}"
+    filepath = os.path.join('uploads', unique_filename)
+    
+    try:
+        file.save(filepath)
+        ai_api_key = get_groq_api_key()
+        vision_api_key = get_vision_api_key()
+        
+        from groq import Groq
+        import base64
+        
+        # Initialize Vision Client
+        vision_client = Groq(api_key=vision_api_key)
+        
+        with open(filepath, "rb") as image_file:
+            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+            
+        # Detect mime type for base64
+        mime_type = "image/jpeg"
+        if _ext == ".png": mime_type = "image/png"
+        elif _ext == ".webp": mime_type = "image/webp"
+        elif _ext == ".gif": mime_type = "image/gif"
+        
+        vision_messages = [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Extract all text visible in this screenshot exactly as written. Then, look for any URLs, links, QR code data, or suspicious instructions (like 'call this number' or 'download this app'). If you see a URL, put it on a new line starting with 'EXTRACTED_URL:'. If it looks like a phishing SMS or email, just transcribe it faithfully."
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{mime_type};base64,{base64_image}"
+                        }
+                    }
+                ]
+            }
+        ]
+        
+        vision_completion = vision_client.chat.completions.create(
+            model="llama-3.2-11b-vision-preview",
+            messages=vision_messages,
+            temperature=0.2,
+            max_tokens=1024,
+            top_p=1,
+            stream=False,
+            stop=None,
+        )
+        
+        extracted_text = vision_completion.choices[0].message.content
+        
+        # Forward extracted text to standard AI NLP analysis
+        result = analyze_text_with_ai(extracted_text)
+        
+        response_data = {
+            "type": "SCREENSHOT_OCR",
+            "extracted_text": extracted_text[:500] + ("..." if len(extracted_text) > 500 else ""),
+            "risk_level": result["risk_level"],
+            "threat_score": result["threat_score"],
+            "is_safe": result["is_safe"],
+            "reasons": result.get("reasons", [])
+        }
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        # Clean up temp file
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            
+    return jsonify(response_data)
+
+@app.route('/api/scan_text', methods=['POST'])
+@limiter.limit("20 per minute")
+def api_scan_text():
+    """API Endpoint for Mobile App Quick Text Scan"""
+    data = request.json
+    if not data or 'content' not in data:
+        return jsonify({"error": "Missing content"}), 400
+        
+    content = data['content'].strip()
+    result = analyze_text_with_ai(content)
+    
+    response_data = {
+        "type": "TEXT",
+        "risk_level": result["risk_level"],
+        "threat_score": result["threat_score"],
+        "is_safe": result["is_safe"],
+        "reasons": result.get("reasons", [])
+    }
+    
+    return jsonify(response_data)
+
 @app.route('/export/<int:history_id>')
 def export_report(history_id):
     if 'user_id' not in session:
