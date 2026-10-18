@@ -506,7 +506,8 @@ def analyze_text_payload(content):
         "is_safe": is_safe,
         "reasons": reasons,
         "ml_score": round(ml_score, 1),
-        "keyword_score": round(keyword_score, 1)
+        "keyword_score": round(keyword_score, 1),
+        "ai_analysis": ai_analysis
     }
 
 def calculate_risk_level(score):
@@ -672,12 +673,16 @@ def dashboard():
 
         ml_score = 0.0
         keyword_score = 0.0
+        dga_result = None
+        vt_result = None
+        ai_analysis = None
         if input_type == 'text':
             text_res = analyze_text_payload(content)
             base_score = text_res["threat_score"]
             reasons = text_res["reasons"]
             ml_score = text_res["ml_score"]
             keyword_score = text_res["keyword_score"]
+            ai_analysis = text_res.get("ai_analysis")
         if input_type == 'url':
             url_features = analyze_url_lexical(content)
             heuristic_score = url_features["score_deduction"]
