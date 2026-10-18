@@ -359,10 +359,12 @@ def analyze_text_with_ai(content):
             'Content-Type': 'application/json'
         }
         prompt = (
-            "You are a cybersecurity expert. Analyze the following email or SMS text "
-            "and determine if it is a phishing attempt. Look for subtle signs like: "
-            "urgency, impersonation, suspicious requests, social engineering, fake rewards, "
-            "fear tactics, unusual sender context, or requests for sensitive information. "
+            "You are an enterprise cybersecurity expert specializing in digital fraud and social engineering detection.\n"
+            "Analyze the following email or SMS text and determine whether it is a malicious PHISHING attack or legitimate communication.\n\n"
+            "CRITICAL GUIDELINES:\n"
+            "- Routine telecom/utility messages (e.g. mobile recharge offers, data pack expiry reminders, monthly billing updates from Vi, Airtel, Jio, BSNL, etc.) that point to official apps or official websites (like myvi.in, airtel.in, jio.com) are SAFE.\n"
+            "- Routine order confirmations, shipping updates, or receipt notifications with no credential-harvesting links are SAFE.\n"
+            "- Only flag as PHISHING or SUSPICIOUS if there are genuine red flags: fake KYC suspension, threat of SIM/account deactivation, requests for OTP/PIN/passwords, lottery claims, or unofficial/unverified links.\n\n"
             "Reply in this exact format only:\n"
             "VERDICT: [PHISHING or SAFE or SUSPICIOUS]\n"
             "REASON: [one sentence explanation]\n\n"
@@ -381,7 +383,7 @@ def analyze_text_with_ai(content):
             payload = {
                 'model': model_name,
                 'messages': [{'role': 'user', 'content': prompt}],
-                'temperature': 0.2,
+                'temperature': 0.1,
                 'max_tokens': 150
             }
             try:
@@ -401,6 +403,112 @@ def analyze_text_with_ai(content):
         return None
     except Exception:
         return None
+
+def is_telecom_service_sms(text):
+    """
+    Identifies legitimate routine telecom & utility notifications (Vi, Airtel, Jio, BSNL, etc.)
+    and ensures they are not penalized by generic spam keywords (e.g. 'recharge', 'validity', 'free data').
+    """
+    text_lower = text.lower()
+    telecom_brands = ['vi', 'vodafone', 'airtel', 'jio', 'bsnl', 'myvi', 'idea', 'airtel thanks', 'myjio', 'trai', 'mtnl']
+    telecom_terms = ['recharge', 'pack', 'validity', 'plan', 'data', 'unlimited calls', 'gb/day', 'talktime', 'sms pack', 'caller tune', 'benefits', 'rs.', 'rs ', 'prepaid', 'postpaid']
+    
+    has_brand = any(re.search(r'\b' + re.escape(b) + r'\b', text_lower) for b in telecom_brands)
+    has_terms = sum(1 for t in telecom_terms if t in text_lower)
+    
+    official_domains = ['myvi.in', 'airtel.in', 'jio.com', 'bsnl.co.in', 'vodafone.in']
+    has_official_domain = any(d in text_lower for d in official_domains)
+    
+    threat_red_flags = [
+        'enter pin', 'enter otp', 'share password', 'netbanking', 'atm card', 
+        'aadhar', 'aadhaar', 'pan card', 'kyc pending', 'kyc update', 'sim block', 
+        'sim deactivate', 'deactivated within', 'call this number', 'download apk',
+        '.xyz', '.top', '.tk', '.biz', '.info', 'bit.ly', 'tinyurl'
+    ]
+    has_red_flags = any(k in text_lower for k in threat_red_flags)
+    return (has_brand or has_official_domain) and (has_terms >= 2) and not has_red_flags
+
+def analyze_text_payload(content):
+    """
+    Unified text & SMS forensic analyzer:
+    1. NLP Naive Bayes Machine Learning inference
+    2. Telecom & service provider context recognition
+    3. High-threat vs benign keyword analysis
+    4. Groq Vision / LLM deep semantic validation with active false-positive suppression
+    """
+    reasons = []
+    
+    # 1. Machine Learning Inference
+    ml_score = 0.0
+    if model and vectorizer:
+        try:
+            vec = vectorizer.transform([content])
+            phishing_label_index = int(np.where(model.classes_ == 1)[0][0]) if 1 in model.classes_ else 1
+            phishing_prob = float(model.predict_proba(vec)[0][phishing_label_index])
+            ml_score = phishing_prob * 100
+        except Exception:
+            ml_score = 0.0
+
+    # 2. Contextual check (telecom & utilities)
+    is_telecom = is_telecom_service_sms(content)
+    
+    # 3. High-threat keywords vs secondary urgency
+    high_threat_keywords = [
+        'kyc pending', 'kyc update', 'pan card', 'aadhaar', 'debit card blocked',
+        'atm card blocked', 'share otp', 'enter otp', 'enter pin', 'unauthorized transaction',
+        'unusual activity', 'account suspended immediately', 'lottery winner',
+        'claim prize', 'giftcard', 'wp-admin', 'reset password immediately'
+    ]
+    matched_threats = [k for k in high_threat_keywords if k in content.lower()]
+    
+    if matched_threats:
+        keyword_score = min(len(matched_threats) * 30.0, 100.0)
+        reasons.append(f"High-risk security keywords detected: {', '.join(matched_threats[:3])}")
+    else:
+        secondary_keywords = ['verify', 'suspended', 'deactivated', 'urgent', 'immediately', 'act now']
+        sec_matches = [w for w in secondary_keywords if re.search(r'\b' + re.escape(w) + r'\b', content.lower())]
+        keyword_score = min(len(sec_matches) * 10.0, 35.0)
+        if sec_matches and not is_telecom:
+            reasons.append("Text includes urgency/verification cues")
+
+    if is_telecom:
+        ml_score = min(ml_score * 0.15, 8.0)
+        keyword_score = 0.0
+        reasons.append("Recognized legitimate telecom service provider communication (Vi/Airtel/Jio/BSNL)")
+
+    base_score = min((ml_score * 0.5) + (keyword_score * 0.5), 100.0)
+
+    # 4. Deep AI Semantic Analysis (Groq)
+    ai_analysis = analyze_text_with_ai(content)
+    if ai_analysis and ai_analysis.get('verdict'):
+        verdict = ai_analysis['verdict']
+        reason = ai_analysis.get('reason', '')
+        if verdict == 'PHISHING':
+            base_score = max(base_score, 80.0)
+            reasons.append(f"AI Forensics: Phishing detected — {reason}")
+        elif verdict == 'SUSPICIOUS':
+            base_score = max(base_score, 45.0)
+            reasons.append(f"AI Forensics: Suspicious content — {reason}")
+        elif verdict == 'SAFE':
+            # Actively suppress false positives!
+            base_score = min(base_score * 0.15, 8.0)
+            reasons.append(f"AI Verification: Confirmed safe communication — {reason}")
+
+    if not reasons:
+        reasons.append("No active phishing patterns or credential harvesting indicators detected")
+
+    risk_level = calculate_risk_level(base_score)
+    is_safe = base_score < 20.0
+
+    return {
+        "threat_score": round(base_score, 1),
+        "risk_level": risk_level,
+        "is_safe": is_safe,
+        "reasons": reasons,
+        "ml_score": round(ml_score, 1),
+        "keyword_score": round(keyword_score, 1)
+    }
+
 def calculate_risk_level(score):
     if score < 20: return "Safe"
     elif score < 45: return "Low Risk"
@@ -563,47 +671,13 @@ def dashboard():
             return redirect(url_for('dashboard'))
 
         ml_score = 0.0
-        if model and vectorizer and content and input_type == 'text':
-            vectorized_input = vectorizer.transform([content])
-            phishing_label_index = int(np.where(model.classes_ == 1)[0][0]) if 1 in model.classes_ else 1
-            phishing_prob = float(model.predict_proba(vectorized_input)[0][phishing_label_index])
-            ml_score = phishing_prob * 100
-            if phishing_prob > 0.40:
-                reasons.append("ML model indicates phishing-like patterns")
-
         keyword_score = 0.0
         if input_type == 'text':
-            suspicious_keywords = [
-                'verify', 'bank', 'secure', 'login', 'paypal', 'amazon', 'netflix',
-                'apple', 'microsoft', 'google', 'hdfc', 'sbi', 'icici', 'upi',
-                'click here', 'verify now', 'confirm account', 'update billing',
-                'reset password', 'signin', 'wp-admin', 'urgent', 'immediately',
-                'suspend', 'expire', 'limited time', 'unusual activity', 'unauthorized',
-                'act now', 'within 24 hours', 'permanently closed', 'giftcard',
-                'free', 'billing', 'account', 'winner', 'prize', 'congratulations',
-                'otp', 'kyc', 'aadhar', 'pan card', 'update', 'password'
-            ]
-            match_count = sum(1 for word in suspicious_keywords if word in content.lower())
-            keyword_score = min(match_count * 12.0, 100.0)
-            if match_count:
-                reasons.append("Text content includes suspicious keywords")
-            else:
-                reasons.append("No strong phishing keywords detected in text")
-
-        base_score = min((ml_score * 0.6) + (keyword_score * 0.4), 100.0)
-        if input_type == 'text':
-            ai_analysis = analyze_text_with_ai(content)
-            if ai_analysis and ai_analysis.get('verdict'):
-                verdict = ai_analysis['verdict']
-                reason = ai_analysis.get('reason', '')
-                if verdict == 'PHISHING':
-                    base_score = min(base_score + 40, 100.0)
-                    reasons.append(f"AI Analysis: Phishing detected — {reason}")
-                elif verdict == 'SUSPICIOUS':
-                    base_score = min(base_score + 20, 100.0)
-                    reasons.append(f"AI Analysis: Suspicious content — {reason}")
-                else:
-                    reasons.append(f"AI Analysis: Content appears safe — {reason}")
+            text_res = analyze_text_payload(content)
+            base_score = text_res["threat_score"]
+            reasons = text_res["reasons"]
+            ml_score = text_res["ml_score"]
+            keyword_score = text_res["keyword_score"]
         if input_type == 'url':
             url_features = analyze_url_lexical(content)
             heuristic_score = url_features["score_deduction"]
@@ -973,7 +1047,7 @@ def api_scan_text():
         return jsonify({"error": "Missing content"}), 400
         
     content = data['content'].strip()
-    result = analyze_text_with_ai(content)
+    result = analyze_text_payload(content)
     
     response_data = {
         "type": "TEXT",
